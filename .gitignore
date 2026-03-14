@@ -1,0 +1,8 @@
+*.mp4
+*.mp3
+*.pyc
+__pycache__/
+venv/
+uploads/
+processed/
+.env

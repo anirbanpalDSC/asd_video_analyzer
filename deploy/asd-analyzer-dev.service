@@ -1,0 +1,19 @@
+[Unit]
+Description=ASD Video Analyzer (Development)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/asd-analyzer-dev
+Environment="PATH=/opt/asd-analyzer-dev/venv/bin"
+ExecStart=/opt/asd-analyzer-dev/venv/bin/streamlit run app.py \
+    --server.port=8502 \
+    --server.address=127.0.0.1 \
+    --server.baseUrlPath=/dev
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

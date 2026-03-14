@@ -1,0 +1,48 @@
+name: Deploy — Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy code to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          source: "."
+          target: "/tmp/asd-deploy-prod"
+
+      - name: Install dependencies and restart service
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            DEPLOY_DIR=/opt/asd-analyzer
+
+            # Sync code (preserve uploads/ and processed/ on server)
+            rsync -a --delete \
+              --exclude='venv/' \
+              --exclude='uploads/' \
+              --exclude='processed/' \
+              --exclude='__pycache__/' \
+              --exclude='*.pyc' \
+              /tmp/asd-deploy-prod/ \
+              $DEPLOY_DIR/
+
+            # Update Python dependencies
+            $DEPLOY_DIR/venv/bin/pip install -q -r $DEPLOY_DIR/requirements.txt
+
+            # Restart and verify
+            sudo systemctl restart asd-analyzer.service
+            sudo systemctl is-active --quiet asd-analyzer.service
+            echo "Production deployed successfully."

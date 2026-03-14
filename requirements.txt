@@ -1,0 +1,16 @@
+# Python dependencies for the project
+# Install the required packages using pip:
+# pip install -r requirements.txt
+
+# System-level dependencies:
+# - ffmpeg: Required for video processing. Install it using your system's package manager (e.g., apt, brew, choco) or download it from the official website: https://ff
+# mpeg.org/download.html
+# - whisper: Required for audio transcription. Install it (openai-whisper or compatible)
+# - ollama: Required for language model processing. Install it (llama-cpp-python or compatible). Local LLM Server, must be running with a vision model. See https://ollama.com/docs/ for more information.
+
+streamlit>=1.35.0
+requests>=2.28.0
+Pillow>=9.3.0
+openai-whisper>=20240314
+pandas>=1.5.0
+yt-dlp>=2024.01.01
