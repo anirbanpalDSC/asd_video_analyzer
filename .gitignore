@@ -6,3 +6,4 @@ venv/
 uploads/
 processed/
 .env
+.claude/settings.local.json
