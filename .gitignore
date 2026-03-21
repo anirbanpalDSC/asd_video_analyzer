@@ -1,9 +1,19 @@
+# File types to ignore
 *.mp4
 *.mp3
 *.pyc
+
+# Files to ignore
+.env
+.claude/settings.local.json
+
+# Directories to ignore
+env/
 __pycache__/
 venv/
 uploads/
 processed/
-.env
-.claude/settings.local.json
+
+# Project instructions
+.claude/
+copilot-instructions.md
