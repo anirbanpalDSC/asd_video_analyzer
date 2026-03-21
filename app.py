@@ -80,6 +80,7 @@ def main():
                             processor.process_video(UPLOADS_DIR / saved_name)
                         # Clear previous analysis and frame selection
                         st.session_state.selected_frames_indices = set()
+                        st.session_state.frames_expanded = True
                         st.session_state.selected_video = saved_name
                         # remember this upload so we don't loop
                         st.session_state.processed_upload_name = uploaded.name
@@ -138,8 +139,9 @@ def main():
                         
                         # Clear previous analysis and frame selection
                         st.session_state.selected_frames_indices = set()
+                        st.session_state.frames_expanded = True
                         st.session_state.selected_video = saved_name
-                        
+
                         # Get and display transcript immediately after processing
                         info = processor.get_video_info(saved_name)
                         if info.get('transcript') is None:
@@ -182,6 +184,30 @@ def main():
             )
             if selected:
                 st.session_state.selected_video = selected
+
+            # Delete button for currently selected video
+            current = st.session_state.get('selected_video')
+            if current:
+                st.divider()
+                st.caption(f"Selected: `{current[:35]}...`" if len(current) > 35 else f"Selected: `{current}`")
+                if st.button("🗑️ Delete this video", use_container_width=True, type="secondary"):
+                    st.session_state['confirm_delete'] = True
+
+                if st.session_state.get('confirm_delete'):
+                    st.warning("This will permanently delete the video, audio, frames, and transcript.")
+                    col_yes, col_no = st.columns(2)
+                    with col_yes:
+                        if st.button("Yes, delete", use_container_width=True, type="primary"):
+                            processor.delete_video(current)
+                            st.session_state.selected_video = None
+                            st.session_state.selected_frames_indices = set()
+                            st.session_state.processed_upload_name = None
+                            st.session_state['confirm_delete'] = False
+                            st.rerun()
+                    with col_no:
+                        if st.button("Cancel", use_container_width=True):
+                            st.session_state['confirm_delete'] = False
+                            st.rerun()
     
     # =========================================================================
     # MAIN AREA: Video Analysis
@@ -247,60 +273,52 @@ def main():
         st.warning("⏳ Video is still processing. Please wait a moment and refresh.")
         return
     
-    # Show frames in grid
-    st.write(f"**Frames extracted:** {len(info['thumbs'])} images")
-    st.write("Click on frames to select/deselect them for analysis:")
-    
     # Initialize session state for frame selection if not exists
     if 'selected_frames_indices' not in st.session_state:
         st.session_state.selected_frames_indices = set()
-    
-    # Select All / Deselect All buttons
-    col1, col2, col3 = st.columns([1, 1, 8])
-    with col1:
-        if st.button("✓ Select All", use_container_width=True):
-            all_indices = set(range(len(info['thumbs'])))
-            st.session_state.selected_frames_indices = all_indices
-            # ensure each checkbox key is checked as well
-            for idx in all_indices:
-                st.session_state[f"frame_{idx}"] = True
-            st.rerun()
-    with col2:
-        if st.button("✗ Clear All", use_container_width=True):
-            st.session_state.selected_frames_indices = set()
-            # uncheck all checkbox keys
-            for idx in range(len(info['thumbs'])):
-                st.session_state[f"frame_{idx}"] = False
-            st.rerun()
-    
-    # Display frames in a grid of 5 columns
-    cols_per_row = 5
-    for idx, thumb_path in enumerate(info['thumbs']):
-        if idx % cols_per_row == 0:
-            cols = st.columns(cols_per_row)
-        
-        col_idx = idx % cols_per_row
-        with cols[col_idx]:
-            key = f"frame_{idx}"
-            # ensure session state key exists, defaulting to prior selection set
-            if key not in st.session_state:
-                st.session_state[key] = idx in st.session_state.selected_frames_indices
+    if 'frames_expanded' not in st.session_state:
+        st.session_state.frames_expanded = True
 
-            # Create a checkbox for frame selection using session state only
-            is_selected = st.checkbox(
-                f"Frame {idx + 1}",
-                key=key
-            )
-            
-            # Update session state based on checkbox value
-            if is_selected:
-                st.session_state.selected_frames_indices.add(idx)
-            else:
-                st.session_state.selected_frames_indices.discard(idx)
-            
-            # Display frame
-            st.image(str(thumb_path), width="stretch")
-    
+    n_selected = len(st.session_state.selected_frames_indices)
+    expander_label = f"🎞️ Frames — {len(info['thumbs'])} extracted, {n_selected} selected"
+    with st.expander(expander_label, expanded=st.session_state.frames_expanded):
+        # Select All / Deselect All buttons
+        col1, col2, _ = st.columns([1, 1, 8])
+        with col1:
+            if st.button("✓ Select All", use_container_width=True):
+                all_indices = set(range(len(info['thumbs'])))
+                st.session_state.selected_frames_indices = all_indices
+                for idx in all_indices:
+                    st.session_state[f"frame_{idx}"] = True
+                st.rerun()
+        with col2:
+            if st.button("✗ Clear All", use_container_width=True):
+                st.session_state.selected_frames_indices = set()
+                for idx in range(len(info['thumbs'])):
+                    st.session_state[f"frame_{idx}"] = False
+                st.rerun()
+
+        # Display frames in a grid of 5 columns
+        cols_per_row = 5
+        for idx, thumb_path in enumerate(info['thumbs']):
+            if idx % cols_per_row == 0:
+                cols = st.columns(cols_per_row)
+
+            col_idx = idx % cols_per_row
+            with cols[col_idx]:
+                key = f"frame_{idx}"
+                if key not in st.session_state:
+                    st.session_state[key] = idx in st.session_state.selected_frames_indices
+
+                is_selected = st.checkbox(f"Frame {idx + 1}", key=key)
+
+                if is_selected:
+                    st.session_state.selected_frames_indices.add(idx)
+                else:
+                    st.session_state.selected_frames_indices.discard(idx)
+
+                st.image(str(thumb_path), width="stretch")
+
     st.divider()
     
     # Analysis section
@@ -334,6 +352,7 @@ def main():
         if len(selected_frames) == 0:
             st.error("Please select at least one frame.")
         else:
+            st.session_state.frames_expanded = False
             with st.spinner("Analyzing with LLM..."):
                 try:
                     result = analyzer.analyze(

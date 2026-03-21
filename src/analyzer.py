@@ -72,7 +72,7 @@ def analyze(
     else:
         messages = [{"role": "user", "content": prompt}]
 
-    payload = {"model": "gemma3:27b-it-fp16", "messages": messages, "stream": False}
+    payload = {"model": "gemma3:27b-it-fp16", "messages": messages, "stream": False, "options": {"temperature": 0}}
 
     r = requests.post(API_URL, json=payload, timeout=180)
     r.raise_for_status()
