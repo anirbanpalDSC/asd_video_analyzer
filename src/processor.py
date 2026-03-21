@@ -6,6 +6,7 @@ Streamlit.  External commands (ffmpeg, whisper) are discovered via
 ``u_utils`` so the paths are configurable.
 """
 
+import shutil
 import subprocess
 from pathlib import Path
 from typing import List, Optional
@@ -125,20 +126,33 @@ def generate_thumbnails(video_path: Path, thumbs_dir: Path, fps: float = 2.0) ->
     return result.returncode == 0 and bool(matches)
 
 
+def _cuda_available() -> bool:
+    """Return True only if torch reports CUDA is available AND a kernel smoke-test passes."""
+    try:
+        import torch
+        if not torch.cuda.is_available():
+            return False
+        # A minimal tensor op catches compute-capability mismatches before whisper tries to load
+        torch.zeros(1, device='cuda')
+        return True
+    except Exception:
+        return False
+
+
 def transcribe_mp3(mp3_path: Path, output_dir: Path, dry_run: bool = False) -> Optional[Path]:
     """Run whisper CLI to transcribe the given mp3 into a .txt file next to it.
 
-    Tries CUDA first, then falls back to CPU if CUDA fails.
+    Uses CUDA when available and compatible, otherwise falls back to CPU.
     Returns path to the transcript or None if the binary was missing / failed.
     """
     if dry_run:
         return None
 
     output_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Try CUDA first, then fall back to CPU if it fails
-    for device in ['cuda', 'cpu']:
-        cmd = [u_utils.WHISPER_CMD,
+
+    devices = ['cuda', 'cpu'] if _cuda_available() else ['cpu']
+    for device in devices:
+        cmd = [*u_utils.WHISPER_CMD,
                '--device', device,
                '--model', 'base',  # Use 'base' for faster processing; change to 'large' if needed
                '--task', 'transcribe',
@@ -186,9 +200,10 @@ def process_video(video_path: Path, force: bool = False) -> None:
     """
     ensure_dirs()
     target = get_processed_folder(video_path.name)
-    if target.exists() and not force:
-        return
     thumbs = target / 'thumbs'
+    transcript_path = target / (video_path.stem + '.txt')
+    if target.exists() and transcript_path.is_file() and not force:
+        return
     target.mkdir(parents=True, exist_ok=True)
     thumbs.mkdir(parents=True, exist_ok=True)
 
@@ -197,6 +212,31 @@ def process_video(video_path: Path, force: bool = False) -> None:
     generate_thumbnails(video_path, thumbs)
     # transcription is best‑effort
     transcribe_mp3(mp3_out, target)
+
+
+def delete_video(video_filename: str) -> bool:
+    """Delete a video and all its processed artifacts.
+
+    Removes the upload file and the entire processed/<stem>/ directory.
+    Returns True if both were removed (or were already absent).
+    """
+    upload_path = UPLOADS_DIR / video_filename
+    processed_path = get_processed_folder(video_filename)
+
+    ok = True
+    try:
+        if upload_path.is_file():
+            upload_path.unlink()
+    except Exception as e:
+        print(f"[delete_video] Could not remove upload: {e}")
+        ok = False
+    try:
+        if processed_path.is_dir():
+            shutil.rmtree(processed_path)
+    except Exception as e:
+        print(f"[delete_video] Could not remove processed folder: {e}")
+        ok = False
+    return ok
 
 
 def get_video_info(video_filename: str) -> dict:

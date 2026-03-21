@@ -20,13 +20,13 @@ FFMPEG_CMD = shutil.which("ffmpeg") or "ffmpeg"  # Use system-installed ffmpeg i
 # If neither works, transcription will gracefully fail.
 _whisper_cli = shutil.which("whisper")
 if _whisper_cli:
-    WHISPER_CMD = _whisper_cli
+    WHISPER_CMD = [_whisper_cli]
 else:
     # Try to use whisper Python module as fallback
     try:
         import whisper as _whisper_module
         # Use the module's CLI entry point via python -m
-        WHISPER_CMD = f"{sys.executable} -m whisper"
+        WHISPER_CMD = [sys.executable, '-m', 'whisper']
     except ImportError:
         # Whisper not installed at all; set a default that will fail gracefully
-        WHISPER_CMD = "whisper"
+        WHISPER_CMD = ['whisper']
