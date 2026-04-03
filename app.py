@@ -11,7 +11,7 @@ from config.config import (
     ensure_dirs,
     ASD_SIGNAL_REFERENCE,
 )
-from src import processor, analyzer, ui_utils
+from src import processor, analyzer, ui_utils, theme
 
 # Configure page layout
 st.set_page_config(layout="wide", initial_sidebar_state="expanded")
@@ -45,14 +45,27 @@ def save_uploaded_file(uploaded) -> str:
 # ---------------------------------------------------------------------------
 
 def main():
+    # ── Theme injection ────────────────────────────────────────────────────
+    if "theme" not in st.session_state:
+        st.session_state.theme = "dark"
+    st.markdown(theme.get_theme_css(st.session_state.theme), unsafe_allow_html=True)
+
     st.title("ASD Video Analyzer")
 
     # =========================================================================
     # SIDEBAR: Controls & Upload
     # =========================================================================
     with st.sidebar:
+        # Theme toggle
+        _icon = "☀️" if st.session_state.theme == "dark" else "🌙"
+        _label = f"{_icon} Switch to {'light' if st.session_state.theme == 'dark' else 'dark'} mode"
+        if st.button(_label, use_container_width=True, key="theme_toggle"):
+            st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
+            st.rerun()
+
+        st.divider()
         st.header("📁 Upload & Process")
-        
+
         # Reset button
         if st.button("🔄 Reset/Clear", use_container_width=True):
             st.session_state.selected_video = None
