@@ -140,51 +140,52 @@ def _cuda_available() -> bool:
 
 
 def transcribe_mp3(mp3_path: Path, output_dir: Path, dry_run: bool = False) -> Optional[Path]:
-    """Run whisper CLI to transcribe the given mp3 into a .txt file next to it.
+    """Transcribe the given mp3 using the whisper Python API.
 
-    Uses CUDA when available and compatible, otherwise falls back to CPU.
-    Returns path to the transcript or None if the binary was missing / failed.
+    Uses CUDA when available, otherwise CPU.
+    Returns path to the transcript .txt or None on failure.
     """
     if dry_run:
         return None
 
     output_dir.mkdir(parents=True, exist_ok=True)
+    text_path = output_dir / (mp3_path.stem + '.txt')
 
+    try:
+        import whisper as _whisper
+        device = 'cuda' if _cuda_available() else 'cpu'
+        model = _whisper.load_model('base', device=device)
+        result = model.transcribe(str(mp3_path))
+        text_path.write_text(result['text'].strip(), encoding='utf-8')
+        return text_path
+    except ImportError:
+        print("[whisper] Python module not available, falling back to CLI")
+    except Exception as e:
+        print(f"[whisper python api] {e}")
+        return None
+
+    # CLI fallback (e.g. conda env where module isn't importable directly)
     devices = ['cuda', 'cpu'] if _cuda_available() else ['cpu']
     for device in devices:
         cmd = [*u_utils.WHISPER_CMD,
                '--device', device,
-               '--model', 'base',  # Use 'base' for faster processing; change to 'large' if needed
+               '--model', 'base',
                '--task', 'transcribe',
                '--output_format', 'txt',
                '--output_dir', str(output_dir),
                str(mp3_path)]
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
-            if result.returncode == 0:
-                # Success! locate and return text file
-                text_path = output_dir / (mp3_path.stem + '.txt')
-                if text_path.is_file():
-                    return text_path
-                else:
-                    # Command succeeded but no output file created (rare edge case)
-                    return None
-            else:
-                # Command failed; log error and try next device
-                print(f"[whisper {device}] Failed with return code {result.returncode}")
-                print(f"[whisper stderr] {result.stderr}")
-                continue
+            if result.returncode == 0 and text_path.is_file():
+                return text_path
+            print(f"[whisper cli {device}] rc={result.returncode} {result.stderr[:200]}")
         except FileNotFoundError:
-            # Whisper binary not found at all
             return None
         except subprocess.TimeoutExpired:
-            print(f"[whisper {device}] Timeout after 10 minutes")
-            continue
+            print(f"[whisper cli {device}] timeout")
         except Exception as e:
-            print(f"[whisper {device}] Exception: {e}")
-            continue
-    
-    # All attempts failed
+            print(f"[whisper cli {device}] {e}")
+
     return None
 
 
