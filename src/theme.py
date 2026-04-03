@@ -109,6 +109,9 @@ hr {{ border-color: rgba(50,55,80,0.09) !important; }}
 /* ── Typography ── */
 .stApp, .stApp p, .stApp span, .stApp label {{ color: #17191f !important; }}
 h1, h2, h3, h4, h5, h6 {{ color: #17191f !important; font-family: 'Inter', sans-serif !important; }}
+
+/* ── Transcript / text areas ── */
+[data-testid="stTextArea"] textarea {{ color: #17191f !important; }}
 </style>
 """.format(font=_FONT_IMPORT)
 
@@ -123,6 +126,12 @@ _DARK_CSS = """
 }}
 [data-testid="stAppViewContainer"] > .main {{
   background: transparent !important;
+}}
+
+/* ── Top header banner ── */
+[data-testid="stHeader"] {{
+  background: #111318 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
 }}
 
 /* ── Sidebar ── */
@@ -237,6 +246,16 @@ hr {{ border-color: rgba(200,210,240,0.08) !important; }}
 /* ── Typography ── */
 .stApp, .stApp p, .stApp span, .stApp label {{ color: #eef0f8 !important; }}
 h1, h2, h3, h4, h5, h6 {{ color: #eef0f8 !important; font-family: 'Inter', sans-serif !important; }}
+
+/* ── Transcript / text areas ── */
+[data-testid="stTextArea"] textarea {{ color: #17191f !important; }}
+
+/* ── URL / text inputs (white background in dark mode) ── */
+[data-testid="stTextInput"] input {{ color: #17191f !important; }}
+
+/* ── Expander content text ── */
+[data-testid="stExpander"] * {{ color: #17191f !important; }}
+[data-testid="stExpander"] label {{ color: #17191f !important; }}
 </style>
 """.format(font=_FONT_IMPORT)
 
