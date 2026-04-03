@@ -207,6 +207,30 @@ _DARK_CSS = """
   border: none !important;
 }}
 
+/* ── File uploader ── */
+[data-testid="stFileUploader"] {{
+  background: transparent !important;
+}}
+[data-testid="stFileUploaderDropzone"],
+[data-testid="stFileUploadDropzone"] {{
+  background: rgba(255,255,255,0.055) !important;
+  border: 1.5px dashed rgba(255,255,255,0.18) !important;
+  border-radius: 14px !important;
+  color: #eef0f8 !important;
+}}
+[data-testid="stFileUploaderDropzone"] *,
+[data-testid="stFileUploadDropzone"] * {{
+  color: #eef0f8 !important;
+  background: transparent !important;
+}}
+[data-testid="stFileUploaderDropzone"] button,
+[data-testid="stFileUploadDropzone"] button {{
+  background: rgba(77,142,247,0.15) !important;
+  color: #4d8ef7 !important;
+  border: 1.5px solid rgba(77,142,247,0.30) !important;
+  border-radius: 100px !important;
+}}
+
 /* ── Divider ── */
 hr {{ border-color: rgba(200,210,240,0.08) !important; }}
 
