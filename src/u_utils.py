@@ -7,6 +7,19 @@ import sys
 from pathlib import Path
 
 #----------------------------------------------------------
+# Whisper model cache
+#----------------------------------------------------------
+# When the app runs as a service user (e.g. www-data), the default ~/.cache/whisper
+# may not exist or may not be writable.  Set WHISPER_CACHE_DIR to an absolute path
+# that has the downloaded model files, or leave it unset to let whisper use its default.
+import os as _os
+_default_whisper_cache = _os.path.join(
+    _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))),
+    "whisper_cache",
+)
+WHISPER_CACHE_DIR: str = _os.environ.get("WHISPER_CACHE_DIR", _default_whisper_cache)
+
+#----------------------------------------------------------
 # Ollama/LLM
 #----------------------------------------------------------
 OLLAMA_URL = "http://localhost:11434/api/chat"

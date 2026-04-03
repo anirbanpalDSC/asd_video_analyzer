@@ -154,7 +154,8 @@ def transcribe_mp3(mp3_path: Path, output_dir: Path, dry_run: bool = False) -> O
     try:
         import whisper as _whisper
         device = 'cuda' if _cuda_available() else 'cpu'
-        model = _whisper.load_model('base', device=device)
+        model = _whisper.load_model('base', device=device,
+                                    download_root=u_utils.WHISPER_CACHE_DIR)
         result = model.transcribe(str(mp3_path))
         text_path.write_text(result['text'].strip(), encoding='utf-8')
         return text_path

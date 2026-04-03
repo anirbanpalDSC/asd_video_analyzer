@@ -68,10 +68,24 @@ def main():
 
         # Reset button
         if st.button("🔄 Reset/Clear", use_container_width=True):
-            st.session_state.selected_video = None
-            st.session_state.selected_frames_indices = set()
-            st.session_state.processed_upload_name = None
-            st.rerun()
+            st.session_state['confirm_reset'] = True
+
+        if st.session_state.get('confirm_reset'):
+            st.warning("This will permanently delete all uploaded videos and processed data.")
+            col_yes, col_no = st.columns(2)
+            with col_yes:
+                if st.button("Yes, delete all", use_container_width=True, type="primary", key="confirm_reset_yes"):
+                    for name in processor.list_uploads():
+                        processor.delete_video(name)
+                    st.session_state.selected_video = None
+                    st.session_state.selected_frames_indices = set()
+                    st.session_state.processed_upload_name = None
+                    st.session_state['confirm_reset'] = False
+                    st.rerun()
+            with col_no:
+                if st.button("Cancel", use_container_width=True, key="confirm_reset_no"):
+                    st.session_state['confirm_reset'] = False
+                    st.rerun()
         
         st.divider()
         

@@ -18,3 +18,4 @@ processed/
 # Project instructions
 .claude/
 copilot-instructions.md
+whisper_cache/
