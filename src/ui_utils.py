@@ -88,6 +88,21 @@ def _compute_confidence(detection_list: List[bool]) -> Tuple[str, int, int]:
     return label, count, total
 
 
+def _strip_placeholder(value: str) -> str:
+    """Remove angle-bracket wrapper and label prefix the LLM may echo literally.
+
+    E.g. '<Observed: Yes>' → 'Yes', '<Note: some text>' → 'some text'.
+    """
+    v = value.strip()
+    if v.startswith("<") and v.endswith(">"):
+        v = v[1:-1].strip()
+    # Strip known label prefixes like "Observed: " or "Note: "
+    for prefix in ("Observed:", "Note:"):
+        if v.lower().startswith(prefix.lower()):
+            v = v[len(prefix):].strip()
+    return v
+
+
 def _confidence_color(val: str) -> str:
     """Return CSS style string for confidence badge coloring."""
     colors = {
@@ -150,9 +165,9 @@ def parse_and_display_analysis(analysis_text: str) -> None:
                 # Legacy format: Signal | Observed | Confidence | Note
                 rows.append({
                     "Signal": cells[0],
-                    "Observed": cells[1],
+                    "Observed": _strip_placeholder(cells[1]),
                     "_llm_confidence": cells[2] if len(cells) == 4 else "",
-                    "Note": cells[3] if len(cells) >= 4 else cells[2],
+                    "Note": _strip_placeholder(cells[3] if len(cells) >= 4 else cells[2]),
                 })
             elif len(cells) > 0:
                 leftover_lines.extend(cells)
@@ -167,7 +182,7 @@ def parse_and_display_analysis(analysis_text: str) -> None:
     use_frequency = bool(frame_detections and n_frames_parsed > 0)
 
     display_rows = []
-    for row_idx, row in enumerate(rows):
+    for row in rows:
         signal_name = row["Signal"]
         # Match signal name to 1-based index in SIGNAL_NAMES
         try:

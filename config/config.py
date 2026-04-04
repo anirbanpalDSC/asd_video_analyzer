@@ -46,16 +46,16 @@ Frame_2: 1=Yes,2=No,3=No,4=No,5=No,6=No,7=No,8=No,9=No,10=No
 ...continue one line per frame for all frames...
 
 SIGNALS:
-Absence or Avoidance of Eye Contact | <Observed: Yes/No/Unclear> | <Note: one sentence>
-Aggressive Behavior | <Observed: Yes/No/Unclear> | <Note: one sentence>
-Hyper- or Hyporeactivity to Sensory Input | <Observed: Yes/No/Unclear> | <Note: one sentence>
-Non-Responsiveness to Verbal Interaction | <Observed: Yes/No/Unclear> | <Note: one sentence>
-Non-Typical Language | <Observed: Yes/No/Unclear> | <Note: one sentence>
-Object Lining-Up | <Observed: Yes/No/Unclear> | <Note: one sentence>
-Self-Hitting or Self-Injurious Behavior | <Observed: Yes/No/Unclear> | <Note: one sentence>
-Self-Spinning or Spinning Objects | <Observed: Yes/No/Unclear> | <Note: one sentence>
-Upper Limb Stereotypies | <Observed: Yes/No/Unclear> | <Note: one sentence>
-Background | <Observed: Yes/No/Unclear> | <Note: one sentence>
+Absence or Avoidance of Eye Contact | Yes/No/Unclear | Your one-sentence observation here.
+Aggressive Behavior | Yes/No/Unclear | Your one-sentence observation here.
+Hyper- or Hyporeactivity to Sensory Input | Yes/No/Unclear | Your one-sentence observation here.
+Non-Responsiveness to Verbal Interaction | Yes/No/Unclear | Your one-sentence observation here.
+Non-Typical Language | Yes/No/Unclear | Your one-sentence observation here.
+Object Lining-Up | Yes/No/Unclear | Your one-sentence observation here.
+Self-Hitting or Self-Injurious Behavior | Yes/No/Unclear | Your one-sentence observation here.
+Self-Spinning or Spinning Objects | Yes/No/Unclear | Your one-sentence observation here.
+Upper Limb Stereotypies | Yes/No/Unclear | Your one-sentence observation here.
+Background | Yes/No/Unclear | Your one-sentence observation here.
 
 CLINICAL NARRATIVE:
 <Your 3-5 sentence summary here>"""
