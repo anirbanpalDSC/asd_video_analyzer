@@ -182,7 +182,7 @@ def parse_and_display_analysis(analysis_text: str) -> None:
     use_frequency = bool(frame_detections and n_frames_parsed > 0)
 
     display_rows = []
-    for row in rows:
+    for row_idx, row in enumerate(rows):
         signal_name = row["Signal"]
         # Match signal name to 1-based index in SIGNAL_NAMES
         try:
