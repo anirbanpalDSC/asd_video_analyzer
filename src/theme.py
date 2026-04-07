@@ -107,12 +107,11 @@ _LIGHT_CSS = """
 hr {{ border-color: rgba(50,55,80,0.09) !important; }}
 
 /* ── Sidebar compact spacing ── */
-[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {{ gap: 0.2rem !important; }}
-[data-testid="stSidebar"] .element-container {{ margin-bottom: 0 !important; }}
-[data-testid="stSidebar"] hr {{ margin: 0.2rem 0 !important; }}
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {{ gap: 0.5rem !important; }}
+[data-testid="stSidebar"] hr {{ margin: 0.3rem 0 !important; }}
 [data-testid="stSidebar"] h1,
 [data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3 {{ margin-top: 0.15rem !important; margin-bottom: 0.15rem !important; padding: 0 !important; }}
+[data-testid="stSidebar"] h3 {{ margin-top: 0.2rem !important; margin-bottom: 0.2rem !important; padding: 0 !important; }}
 
 /* ── Typography ── */
 .stApp, .stApp p, .stApp span, .stApp label {{ color: #17191f !important; }}
@@ -121,6 +120,36 @@ h1, h2, h3, h4, h5, h6 {{ color: #17191f !important; font-family: 'Inter', sans-
 /* ── Transcript / text areas ── */
 [data-testid="stTextArea"] textarea {{ color: #17191f !important; }}
 </style>
+<script>
+if (!window._stFrameShiftInit) {{
+  window._stFrameShiftInit = true;
+  window._lastFrameIdx = -1;
+  document.addEventListener('click', function(e) {{
+    var cb = e.target.closest('[data-testid="stCheckbox"]');
+    if (!cb) return;
+    var lbl = cb.querySelector('label');
+    if (!lbl || !/^Frame \d+$/.test(lbl.textContent.trim())) return;
+    var all = Array.from(document.querySelectorAll('[data-testid="stCheckbox"]')).filter(function(el) {{
+      var l = el.querySelector('label');
+      return l && /^Frame \d+$/.test(l.textContent.trim());
+    }});
+    var idx = all.indexOf(cb);
+    if (idx === -1) return;
+    if (e.shiftKey && window._lastFrameIdx >= 0 && idx !== window._lastFrameIdx) {{
+      var inp = cb.querySelector('input[type="checkbox"]');
+      var target = !inp.checked;
+      var lo = Math.min(window._lastFrameIdx, idx);
+      var hi = Math.max(window._lastFrameIdx, idx);
+      for (var i = lo; i <= hi; i++) {{
+        if (i === idx) continue;
+        var other = all[i].querySelector('input[type="checkbox"]');
+        if (other && other.checked !== target) other.click();
+      }}
+    }}
+    window._lastFrameIdx = idx;
+  }}, true);
+}}
+</script>
 """.format(font=_FONT_IMPORT)
 
 _DARK_CSS = """
@@ -252,12 +281,11 @@ _DARK_CSS = """
 hr {{ border-color: rgba(200,210,240,0.08) !important; }}
 
 /* ── Sidebar compact spacing ── */
-[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {{ gap: 0.2rem !important; }}
-[data-testid="stSidebar"] .element-container {{ margin-bottom: 0 !important; }}
-[data-testid="stSidebar"] hr {{ margin: 0.2rem 0 !important; }}
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {{ gap: 0.5rem !important; }}
+[data-testid="stSidebar"] hr {{ margin: 0.3rem 0 !important; }}
 [data-testid="stSidebar"] h1,
 [data-testid="stSidebar"] h2,
-[data-testid="stSidebar"] h3 {{ margin-top: 0.15rem !important; margin-bottom: 0.15rem !important; padding: 0 !important; }}
+[data-testid="stSidebar"] h3 {{ margin-top: 0.2rem !important; margin-bottom: 0.2rem !important; padding: 0 !important; }}
 
 /* ── Typography ── */
 .stApp, .stApp p, .stApp span, .stApp label {{ color: #eef0f8 !important; }}
@@ -273,6 +301,36 @@ h1, h2, h3, h4, h5, h6 {{ color: #eef0f8 !important; font-family: 'Inter', sans-
 [data-testid="stExpander"] * {{ color: #17191f !important; }}
 [data-testid="stExpander"] label {{ color: #17191f !important; }}
 </style>
+<script>
+if (!window._stFrameShiftInit) {{
+  window._stFrameShiftInit = true;
+  window._lastFrameIdx = -1;
+  document.addEventListener('click', function(e) {{
+    var cb = e.target.closest('[data-testid="stCheckbox"]');
+    if (!cb) return;
+    var lbl = cb.querySelector('label');
+    if (!lbl || !/^Frame \d+$/.test(lbl.textContent.trim())) return;
+    var all = Array.from(document.querySelectorAll('[data-testid="stCheckbox"]')).filter(function(el) {{
+      var l = el.querySelector('label');
+      return l && /^Frame \d+$/.test(l.textContent.trim());
+    }});
+    var idx = all.indexOf(cb);
+    if (idx === -1) return;
+    if (e.shiftKey && window._lastFrameIdx >= 0 && idx !== window._lastFrameIdx) {{
+      var inp = cb.querySelector('input[type="checkbox"]');
+      var target = !inp.checked;
+      var lo = Math.min(window._lastFrameIdx, idx);
+      var hi = Math.max(window._lastFrameIdx, idx);
+      for (var i = lo; i <= hi; i++) {{
+        if (i === idx) continue;
+        var other = all[i].querySelector('input[type="checkbox"]');
+        if (other && other.checked !== target) other.click();
+      }}
+    }}
+    window._lastFrameIdx = idx;
+  }}, true);
+}}
+</script>
 """.format(font=_FONT_IMPORT)
 
 
