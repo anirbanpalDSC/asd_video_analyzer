@@ -232,29 +232,65 @@ def main():
     
     selected_video = st.session_state.get('selected_video')
     
-    if not selected_video:
-        st.info("👈 Upload a video using the sidebar to get started.")
-        return
-    
-    # Get video info
-    info = processor.get_video_info(selected_video)
-    
-    # Show video player with original video + audio (consistent width for both upload and download)
-    video_path = UPLOADS_DIR / selected_video
-    if video_path.exists():
-        st.video(str(video_path), start_time=0)
-
-
-    
-    # Show signal reference card in sidebar
+    # Signal reference and release notes — always visible in sidebar
     with st.sidebar:
         st.divider()
+        st.write("")
         st.subheader("📚 Signal Reference")
+        st.write("")
         with st.expander("ASD Signal Categories", expanded=False):
             for signal, description in ASD_SIGNAL_REFERENCE.items():
                 st.write(f"**{signal}**")
                 st.write(description)
                 st.divider()
+
+        st.write("")
+        st.divider()
+        st.write("")
+        st.subheader("📋 Release Notes")
+        st.write("")
+        with st.expander("What's new", expanded=False):
+            st.markdown("""
+**v0.6** — Frame selection limit
+- Max 15 frames per analysis enforced with modal warning
+- Select All blocked when total frames exceed limit
+
+**v0.5** — Streaming & reliability
+- Analysis no longer hangs; live token counter during generation
+- Hard 300s timeout prevents infinite waits
+
+**v0.4** — UI polish
+- Light/dark mode fully consistent across all components
+- Analysis results persist across theme switches
+- CSV download for analysis table
+
+**v0.3** — Frame selector UX
+- Expander stays open while selecting frames
+- Shift-click to select a range of frames
+- Reset button no longer overlaps header
+
+**v0.2** — Analysis display
+- Per-frame signal detection (FRAME_DETECTIONS format)
+- Frequency-based confidence (High / Medium / Low)
+- Clinical narrative section
+
+**v0.1** — Initial release
+- Video upload & YouTube / Facebook link download
+- Audio transcription via Whisper
+- Behavioral signal analysis via local LLM (Ollama)
+""")
+
+    if not selected_video:
+        st.info("👈 Upload a video using the sidebar to get started.")
+        return
+
+    # Get video info
+    info = processor.get_video_info(selected_video)
+
+    # Show video player with original video + audio (consistent width for both upload and download)
+    video_path = UPLOADS_DIR / selected_video
+    if video_path.exists():
+        st.video(str(video_path), start_time=0)
     
     # Main content: Frame selection and analysis
     st.subheader(f"Video: {selected_video[:40]}...")
