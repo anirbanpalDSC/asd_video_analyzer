@@ -73,6 +73,7 @@ def main():
                 st.session_state.selected_video = None
                 st.session_state.selected_frames_indices = set()
                 st.session_state.processed_upload_name = None
+                st.session_state.pop("analysis_result", None)
                 st.rerun()
 
         st.divider()
@@ -197,8 +198,9 @@ def main():
                 index=None,
                 placeholder="Select a video..."
             )
-            if selected:
+            if selected and selected != st.session_state.get("selected_video"):
                 st.session_state.selected_video = selected
+                st.session_state.pop("analysis_result", None)
 
             # Delete button for currently selected video
             current = st.session_state.get('selected_video')
@@ -231,7 +233,7 @@ def main():
     selected_video = st.session_state.get('selected_video')
     
     if not selected_video:
-        st.info("👆 Upload a video using the sidebar to get started.")
+        st.info("👈 Upload a video using the sidebar to get started.")
         return
     
     # Get video info
@@ -294,9 +296,13 @@ def main():
     if "frames_expander" not in st.session_state:
         st.session_state["frames_expander"] = True
 
+    def _on_frame_check():
+        # Explicitly keep the expander open when a checkbox is toggled
+        st.session_state["frames_expander"] = True
+
     n_selected = sum(1 for i in range(len(info['thumbs'])) if st.session_state.get(f"frame_{i}", False))
     expander_label = f"🎞️ Frames — {len(info['thumbs'])} extracted, {n_selected} selected"
-    with st.expander(expander_label, key="frames_expander"):
+    with st.expander(expander_label, expanded=st.session_state["frames_expander"]):
         # Select All / Deselect All buttons
         col1, col2, _ = st.columns([1, 1, 8])
         with col1:
@@ -305,12 +311,14 @@ def main():
                 st.session_state.selected_frames_indices = all_indices
                 for idx in all_indices:
                     st.session_state[f"frame_{idx}"] = True
+                st.session_state["frames_expander"] = True
                 st.rerun()
         with col2:
             if st.button("✗ Clear All", use_container_width=True):
                 st.session_state.selected_frames_indices = set()
                 for idx in range(len(info['thumbs'])):
                     st.session_state[f"frame_{idx}"] = False
+                st.session_state["frames_expander"] = True
                 st.rerun()
 
         # Display frames in a grid of 5 columns
@@ -325,7 +333,7 @@ def main():
                 if key not in st.session_state:
                     st.session_state[key] = idx in st.session_state.selected_frames_indices
 
-                is_selected = st.checkbox(f"Frame {idx + 1}", key=key)
+                is_selected = st.checkbox(f"Frame {idx + 1}", key=key, on_change=_on_frame_check)
 
                 if is_selected:
                     st.session_state.selected_frames_indices.add(idx)
@@ -368,6 +376,7 @@ def main():
             st.error("Please select at least one frame.")
         else:
             st.session_state["frames_expander"] = False
+            st.session_state.pop("analysis_result", None)
             with st.spinner("Analyzing with LLM..."):
                 try:
                     result = analyzer.analyze(
@@ -376,10 +385,14 @@ def main():
                         selected_thumb_paths=selected_frames,
                         transcript=info['transcript'],
                     )
-                    st.subheader("Analysis Results")
-                    ui_utils.parse_and_display_analysis(result)
+                    st.session_state["analysis_result"] = result
                 except Exception as e:
                     st.error(f"Analysis failed: {str(e)}")
+
+    # Always render stored result (survives theme toggles and other reruns)
+    if st.session_state.get("analysis_result"):
+        st.subheader("Analysis Results")
+        ui_utils.parse_and_display_analysis(st.session_state["analysis_result"])
 
 
 if __name__ == '__main__':

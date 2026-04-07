@@ -2,7 +2,6 @@
 
 from pathlib import Path
 from typing import Dict, List, Tuple
-import pandas as pd
 
 import streamlit as st
 
@@ -86,14 +85,45 @@ def _compute_confidence(detection_list: List[bool]) -> Tuple[str, int, int]:
     return label, count, total
 
 
-def _confidence_color(val: str) -> str:
-    """Return CSS style string for confidence badge coloring."""
-    colors = {
-        "High":   "background-color:#d4edda;color:#155724;font-weight:600",
-        "Medium": "background-color:#fff3cd;color:#856404;font-weight:600",
-        "Low":    "background-color:#f8d7da;color:#721c24;font-weight:600",
-    }
-    return colors.get(val, "")
+def _badge(label: str, kind: str, dark: bool) -> str:
+    """Return an inline-styled HTML badge.
+
+    kind: 'yes' | 'no' | 'neutral' | 'high' | 'medium' | 'low'
+    """
+    if dark:
+        styles = {
+            "yes":     "background:rgba(74,222,128,0.18);color:#4ade80;border:1.5px solid #4ade80",
+            "no":      "background:rgba(248,113,113,0.18);color:#f87171;border:1.5px solid #f87171",
+            "neutral": "background:rgba(148,163,184,0.18);color:#94a3b8;border:1.5px solid #94a3b8",
+            "high":    "background:rgba(74,222,128,0.18);color:#4ade80;border:1.5px solid #4ade80",
+            "medium":  "background:rgba(250,204,21,0.18);color:#facc15;border:1.5px solid #facc15",
+            "low":     "background:rgba(248,113,113,0.18);color:#f87171;border:1.5px solid #f87171",
+        }
+    else:
+        styles = {
+            "yes":     "background:#d4edda;color:#155724",
+            "no":      "background:#f8d7da;color:#721c24",
+            "neutral": "background:#e2e8f0;color:#4a5568",
+            "high":    "background:#d4edda;color:#155724",
+            "medium":  "background:#fff3cd;color:#856404",
+            "low":     "background:#f8d7da;color:#721c24",
+        }
+    style = styles.get(kind, styles["neutral"])
+    return (
+        f'<span style="display:inline-block;padding:2px 10px;border-radius:12px;'
+        f'font-size:0.82em;font-weight:700;{style}">{label}</span>'
+    )
+
+
+def _confidence_badge(val: str, dark: bool = False) -> str:
+    kind = val.lower() if val.lower() in ("high", "medium", "low") else "neutral"
+    return _badge(val, kind, dark)
+
+
+def _observed_badge(val: str, dark: bool = False) -> str:
+    v = val.strip().lower()
+    kind = "yes" if v == "yes" else ("no" if v == "no" else "neutral")
+    return _badge(val, kind, dark)
 
 
 # ---------------------------------------------------------------------------
@@ -191,8 +221,6 @@ def parse_and_display_analysis(analysis_text: str) -> None:
             "Note": row["Note"],
         })
 
-    df = pd.DataFrame(display_rows)
-
     # ── Explainability note ──────────────────────────────────────────────────
     if use_frequency:
         st.info(
@@ -207,9 +235,72 @@ def parse_and_display_analysis(analysis_text: str) -> None:
             "For frequency-based confidence, ensure the default analysis prompt is used."
         )
 
-    # ── Styled table ─────────────────────────────────────────────────────────
-    styled = df.style.map(_confidence_color, subset=["Confidence"])
-    st.dataframe(styled, use_container_width=True, hide_index=True)
+    # ── HTML table (theme-safe — avoids AG Grid dark-mode issues) ────────────
+    dark = st.session_state.get("theme", "light") == "dark"
+
+    col_names = ["Signal", "Observed", "Confidence", "Frames Detected", "Note"]
+
+    if dark:
+        th_style = (
+            "background:#1e2130;color:#c8d0e8;font-weight:600;font-size:0.85em;"
+            "padding:8px 12px;text-align:left;border-bottom:2px solid #2e3450;"
+        )
+        td_style = (
+            "padding:8px 12px;font-size:0.88em;color:#c8d0e8;"
+            "border-bottom:1px solid #232840;vertical-align:top;"
+        )
+        tr_even = "background:#161922;"
+        tr_odd  = "background:#1c2030;"
+        wrap_style = "border:1px solid #2e3450;"
+    else:
+        th_style = (
+            "background:#f0f4ff;color:#17191f;font-weight:600;font-size:0.85em;"
+            "padding:8px 12px;text-align:left;border-bottom:2px solid #d0d7e8;"
+        )
+        td_style = (
+            "padding:8px 12px;font-size:0.88em;color:#17191f;"
+            "border-bottom:1px solid #e8ecf4;vertical-align:top;"
+        )
+        tr_even = "background:#ffffff;"
+        tr_odd  = "background:#f8faff;"
+        wrap_style = "border:1px solid #d0d7e8;"
+
+    body_rows = []
+    for i, row in enumerate(display_rows):
+        bg = tr_even if i % 2 == 0 else tr_odd
+        cells = [
+            f'<td style="{td_style}">{row["Signal"]}</td>',
+            f'<td style="{td_style}">{_observed_badge(row["Observed"], dark)}</td>',
+            f'<td style="{td_style}">{_confidence_badge(row["Confidence"], dark)}</td>',
+            f'<td style="{td_style}">{row["Frames Detected"]}</td>',
+            f'<td style="{td_style}">{row["Note"]}</td>',
+        ]
+        body_rows.append(f'<tr style="{bg}">{"".join(cells)}</tr>')
+
+    header_html = "".join(f"<th style='{th_style}'>{c}</th>" for c in col_names)
+    body_html = "".join(body_rows)
+    table_html = (
+        f'<div style="overflow-x:auto;border-radius:12px;{wrap_style}margin-bottom:1rem;">'
+        '<table style="width:100%;border-collapse:collapse;">'
+        f'<thead><tr>{header_html}</tr></thead>'
+        f'<tbody>{body_html}</tbody>'
+        '</table></div>'
+    )
+    st.markdown(table_html, unsafe_allow_html=True)
+
+    # ── CSV download ─────────────────────────────────────────────────────────
+    import io, csv
+    buf = io.StringIO()
+    writer = csv.DictWriter(buf, fieldnames=col_names)
+    writer.writeheader()
+    for row in display_rows:
+        writer.writerow({c: row[c] for c in col_names})
+    st.download_button(
+        label="⬇️ Download CSV",
+        data=buf.getvalue(),
+        file_name="asd_analysis.csv",
+        mime="text/csv",
+    )
 
     # ── Clinical narrative ───────────────────────────────────────────────────
     extra = "\n".join(leftover_lines).strip()
