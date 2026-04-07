@@ -6,6 +6,7 @@ Streamlit.  External commands (ffmpeg, whisper) are discovered via
 ``u_utils`` so the paths are configurable.
 """
 
+import hashlib
 import shutil
 import subprocess
 from pathlib import Path
@@ -49,11 +50,15 @@ def download_video_from_url(url: str) -> Optional[str]:
             # Get video info to determine extension
             info = ydl.extract_info(url, download=False)
             video_title = info.get('title', 'video').replace(' ', '_')[:50]
-            
-            # Generate unique filename
-            unique_name = f"{video_title}_{uuid.uuid4().hex[:8]}.mp4"
+
+            # Deterministic filename based on URL — same URL never downloads twice
+            url_hash = hashlib.md5(url.strip().encode()).hexdigest()[:8]
+            unique_name = f"{video_title}_{url_hash}.mp4"
             save_path = UPLOADS_DIR / unique_name
-            
+
+            if save_path.exists():
+                return unique_name
+
             # Download to temp location first
             ydl_opts['outtmpl'] = str(UPLOADS_DIR / 'temp_download')
             
