@@ -8,12 +8,16 @@ encoded thumbnails.
 
 import base64
 import json
+import time
 from pathlib import Path
-from typing import List, Optional
+from typing import Generator, List, Optional
 
 import requests
 
 from config.config import API_URL, DEFAULT_ASD_PROMPT
+
+# Hard ceiling on total generation time (seconds)
+_MAX_GENERATION_SECS = 300
 
 
 def _encode_images(paths: List[Path]) -> List[str]:
@@ -72,21 +76,88 @@ def analyze(
     else:
         messages = [{"role": "user", "content": prompt}]
 
-    payload = {"model": "gemma3:27b-it-fp16", "messages": messages, "stream": True, "options": {"temperature": 0, "top_k": 1, "seed": 42}}
+    payload = {
+        "model": "gemma3:27b-it-fp16",
+        "messages": messages,
+        "stream": True,
+        "options": {"temperature": 0, "top_k": 1, "seed": 42},
+    }
 
-    r = requests.post(API_URL, json=payload, timeout=(30, 600), stream=True)
+    r = requests.post(API_URL, json=payload, timeout=(30, 120), stream=True)
     r.raise_for_status()
 
-    chunks = []
+    deadline = time.time() + _MAX_GENERATION_SECS
+    chunks: List[str] = []
     for line in r.iter_lines():
+        if time.time() > deadline:
+            raise TimeoutError(
+                f"Analysis exceeded {_MAX_GENERATION_SECS}s limit — "
+                "try selecting fewer frames."
+            )
         if not line:
             continue
         try:
             obj = json.loads(line)
         except json.JSONDecodeError:
             continue
-        chunks.append(obj.get("message", {}).get("content", ""))
-        if obj.get("done"):
+        token = obj.get("message", {}).get("content", "")
+        chunks.append(token)
+        if obj.get("done") or obj.get("done_reason") == "stop":
             break
 
     return "".join(chunks).strip()
+
+
+def analyze_stream(
+    video: str,
+    user_prompt: Optional[str] = None,
+    selected_thumb_paths: Optional[List[Path]] = None,
+    transcript: Optional[str] = None,
+) -> Generator[str, None, None]:
+    """Same as analyze() but yields text tokens as they arrive.
+
+    Callers should collect the yielded chunks to obtain the full response.
+    Raises on HTTP errors or timeout.
+    """
+    prompt = user_prompt or DEFAULT_ASD_PROMPT
+    if transcript:
+        prompt = f"{prompt}\n\nTranscript context:\n{transcript}"
+
+    img_b64_list = _encode_images(selected_thumb_paths or [])
+
+    if img_b64_list:
+        content = prompt + f"\n\n[Processing {len(img_b64_list)} video frames for behavioral analysis]\n"
+        for _ in img_b64_list:
+            content += "[image]\n"
+        messages = [{"role": "user", "content": content, "images": img_b64_list}]
+    else:
+        messages = [{"role": "user", "content": prompt}]
+
+    payload = {
+        "model": "gemma3:27b-it-fp16",
+        "messages": messages,
+        "stream": True,
+        "options": {"temperature": 0, "top_k": 1, "seed": 42},
+    }
+
+    r = requests.post(API_URL, json=payload, timeout=(30, 120), stream=True)
+    r.raise_for_status()
+
+    deadline = time.time() + _MAX_GENERATION_SECS
+    for line in r.iter_lines():
+        if time.time() > deadline:
+            raise TimeoutError(
+                f"Analysis exceeded {_MAX_GENERATION_SECS}s limit — "
+                "try selecting fewer frames."
+            )
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        token = obj.get("message", {}).get("content", "")
+        if token:
+            yield token
+        if obj.get("done") or obj.get("done_reason") == "stop":
+            return

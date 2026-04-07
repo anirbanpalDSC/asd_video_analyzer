@@ -377,17 +377,27 @@ def main():
         else:
             st.session_state["frames_expander"] = False
             st.session_state.pop("analysis_result", None)
-            with st.spinner("Analyzing with LLM..."):
-                try:
-                    result = analyzer.analyze(
-                        selected_video,
-                        user_prompt=user_prompt if user_prompt != default_prompt else None,
-                        selected_thumb_paths=selected_frames,
-                        transcript=info['transcript'],
-                    )
-                    st.session_state["analysis_result"] = result
-                except Exception as e:
-                    st.error(f"Analysis failed: {str(e)}")
+            try:
+                prompt_arg = user_prompt if user_prompt != default_prompt else None
+                stream = analyzer.analyze_stream(
+                    selected_video,
+                    user_prompt=prompt_arg,
+                    selected_thumb_paths=selected_frames,
+                    transcript=info['transcript'],
+                )
+                status = st.empty()
+                status.info("Connecting to model…")
+                chunks = []
+                for token in stream:
+                    chunks.append(token)
+                    n = len(chunks)
+                    if n % 30 == 0:
+                        status.info(f"Generating… {n} tokens received")
+                status.empty()
+                result = "".join(chunks).strip()
+                st.session_state["analysis_result"] = result
+            except Exception as e:
+                st.error(f"Analysis failed: {str(e)}")
 
     # Always render stored result (survives theme toggles and other reruns)
     if st.session_state.get("analysis_result"):
