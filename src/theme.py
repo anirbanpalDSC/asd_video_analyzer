@@ -126,6 +126,15 @@ _LIGHT_CSS = """
   color: #17191f !important;
 }}
 
+/* ── Sidebar expander content — white background ── */
+[data-testid="stSidebar"] [data-testid="stExpander"] details {{
+  background: #ffffff !important;
+  border-radius: 0 0 14px 14px !important;
+}}
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] {{
+  background: #ffffff !important;
+}}
+
 /* ── File uploader (light mode) ── */
 [data-testid="stFileUploader"] {{
   background: transparent !important;
@@ -378,8 +387,17 @@ h1, h2, h3, h4, h5, h6 {{ color: #eef0f8 !important; font-family: 'Inter', sans-
 [data-testid="stTextInput"] input {{ color: #17191f !important; }}
 
 /* ── Expander content text ── */
-[data-testid="stExpander"] * {{ color: #17191f !important; }}
-[data-testid="stExpander"] label {{ color: #17191f !important; }}
+[data-testid="stExpander"] * {{ color: #eef0f8 !important; }}
+[data-testid="stExpander"] label {{ color: #eef0f8 !important; }}
+
+/* ── Sidebar expander content — solid dark background ── */
+[data-testid="stSidebar"] [data-testid="stExpander"] details {{
+  background: #1c2030 !important;
+  border-radius: 0 0 14px 14px !important;
+}}
+[data-testid="stSidebar"] [data-testid="stExpanderDetails"] {{
+  background: #1c2030 !important;
+}}
 
 /* ── Sidebar bottom breathing room (above collapse control) ── */
 [data-testid="stSidebarContent"] {{

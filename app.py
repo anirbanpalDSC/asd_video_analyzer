@@ -251,6 +251,13 @@ def main():
         st.write("")
         with st.expander("What's new", expanded=False):
             st.markdown("""
+**v0.7** — UI refinements
+- Video player resized to compact fixed width
+- Sidebar expander content has solid white/dark background
+- Signal Reference and Release Notes always visible in sidebar
+- Fullscreen button removed from frame thumbnails
+- Extra spacing around sidebar sections
+
 **v0.6** — Frame selection limit
 - Max 15 frames per analysis enforced with modal warning
 - Select All blocked when total frames exceed limit
