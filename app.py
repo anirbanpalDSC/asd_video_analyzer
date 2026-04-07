@@ -64,15 +64,17 @@ def main():
             st.rerun()
 
         st.divider()
-        st.header("📁 Upload & Process")
+        _h_col, _r_col = st.columns([3, 1])
+        with _h_col:
+            st.header("📁 Upload & Process")
+        with _r_col:
+            st.write("")  # vertical alignment nudge
+            if st.button("🔄", use_container_width=True, help="Reset / Clear selection"):
+                st.session_state.selected_video = None
+                st.session_state.selected_frames_indices = set()
+                st.session_state.processed_upload_name = None
+                st.rerun()
 
-        # Reset button
-        if st.button("🔄 Reset/Clear", use_container_width=True):
-            st.session_state.selected_video = None
-            st.session_state.selected_frames_indices = set()
-            st.session_state.processed_upload_name = None
-            st.rerun()
-        
         st.divider()
         
         # Tabs for upload method
