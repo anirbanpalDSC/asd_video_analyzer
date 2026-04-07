@@ -180,6 +180,25 @@ h1, h2, h3, h4, h5, h6 {{ color: #17191f !important; font-family: 'Inter', sans-
   border-radius: 6px !important;
   padding: 2px 6px !important;
 }}
+
+/* ── Sidebar bottom breathing room (above collapse control) ── */
+[data-testid="stSidebarContent"] {{
+  padding-bottom: 2.5rem !important;
+}}
+
+/* ── Disable image fullscreen button ── */
+[data-testid="StyledFullScreenButton"] {{ display: none !important; }}
+
+/* ── Main video player — fixed compact size ── */
+[data-testid="stVideo"] {{
+  max-width: 480px !important;
+  width: 480px !important;
+}}
+[data-testid="stVideo"] video {{
+  width: 100% !important;
+  max-width: 100% !important;
+  border-radius: 12px !important;
+}}
 </style>
 <script>
 if (!window._stFrameShiftInit) {{
@@ -361,6 +380,25 @@ h1, h2, h3, h4, h5, h6 {{ color: #eef0f8 !important; font-family: 'Inter', sans-
 /* ── Expander content text ── */
 [data-testid="stExpander"] * {{ color: #17191f !important; }}
 [data-testid="stExpander"] label {{ color: #17191f !important; }}
+
+/* ── Sidebar bottom breathing room (above collapse control) ── */
+[data-testid="stSidebarContent"] {{
+  padding-bottom: 2.5rem !important;
+}}
+
+/* ── Disable image fullscreen button ── */
+[data-testid="StyledFullScreenButton"] {{ display: none !important; }}
+
+/* ── Main video player — fixed compact size ── */
+[data-testid="stVideo"] {{
+  max-width: 480px !important;
+  width: 480px !important;
+}}
+[data-testid="stVideo"] video {{
+  width: 100% !important;
+  max-width: 100% !important;
+  border-radius: 12px !important;
+}}
 </style>
 <script>
 if (!window._stFrameShiftInit) {{
