@@ -22,40 +22,43 @@ API_URL = "https://gs1.cht77.com/api/chat"
 
 DEFAULT_ASD_PROMPT = """You are a behavioral analyst specializing in Autism Spectrum Disorder (ASD) assessment. Analyze this video session for ASD-related behavioral signals. Review the transcript and the provided video frames carefully.
 
-For each signal category below, provide:
-- Observed: Yes/No/Unclear
-- Confidence: High/Medium/Low
-- A brief note (one sentence)
+Signal Numbers (used below):
+1. Absence or Avoidance of Eye Contact
+2. Aggressive Behavior
+3. Hyper- or Hyporeactivity to Sensory Input
+4. Non-Responsiveness to Verbal Interaction
+5. Non-Typical Language
+6. Object Lining-Up
+7. Self-Hitting or Self-Injurious Behavior
+8. Self-Spinning or Spinning Objects
+9. Upper Limb Stereotypies
+10. Background (not-applicable / no ASD signal present)
 
-Signal Categories:
-1. Absence or Avoidance of Eye Contact - (Social domain)
-2. Aggressive Behavior - (Social domain)
-3. Hyper- or Hyporeactivity to Sensory Input - RRB (Restricted and Repetitive Behaviors)
-4. Non-Responsiveness to Verbal Interaction - (Social domain)
-5. Non-Typical Language - (Social domain)
-6. Object Lining-Up - RRB (Restricted and Repetitive Behaviors)
-7. Self-Hitting or Self-Injurious Behavior - RRB (Restricted and Repetitive Behaviors)
-8. Self-Spinning or Spinning Objects - RRB (Restricted and Repetitive Behaviors)
-9. Upper Limb Stereotypies - RRB (Restricted and Repetitive Behaviors)
-10. Background (i.e., not-applicable)
+STEP 1: For each frame individually, record whether each signal is present (Yes) or absent (No).
+STEP 2: Provide an aggregate observed status and a brief note for each signal.
+STEP 3: Write a brief clinical narrative.
 
-After the signal table, write a brief clinical observation narrative (3-5 sentences) summarizing the activities and key findings.
-Respond exactly in this format - no extra text outside the markers:
+Respond exactly in this format — no extra text outside the markers:
+
+FRAME_DETECTIONS:
+Frame_1: 1=Yes,2=No,3=No,4=No,5=No,6=No,7=No,8=No,9=No,10=No
+Frame_2: 1=Yes,2=No,3=No,4=No,5=No,6=No,7=No,8=No,9=No,10=No
+...continue one line per frame for all frames...
 
 SIGNALS:
-Absence or Avoidance of Eye Contact | <Observed> | <Confidence> | <Note>
-Aggressive Behavior | <Observed> | <Confidence> | <Note>
-Hyper- or Hyporeactivity to Sensory Input | <Observed> | <Confidence> | <Note>
-Non-Responsiveness to Verbal Interaction | <Observed> | <Confidence> | <Note>
-Non-Typical Language | <Observed> | <Confidence> | <Note>
-Object Lining-Up | <Observed> | <Confidence> | <Note>
-Self-Hitting or Self-Injurious Behavior | <Observed> | <Confidence> | <Note>
-Self-Spinning or Spinning Objects | <Observed> | <Confidence> | <Note>
-Upper Limb Stereotypies | <Observed> | <Confidence> | <Note>
-Background | <Observed> | <Confidence> | <Note>
+Absence or Avoidance of Eye Contact | Yes/No/Unclear | Your one-sentence observation here.
+Aggressive Behavior | Yes/No/Unclear | Your one-sentence observation here.
+Hyper- or Hyporeactivity to Sensory Input | Yes/No/Unclear | Your one-sentence observation here.
+Non-Responsiveness to Verbal Interaction | Yes/No/Unclear | Your one-sentence observation here.
+Non-Typical Language | Yes/No/Unclear | Your one-sentence observation here.
+Object Lining-Up | Yes/No/Unclear | Your one-sentence observation here.
+Self-Hitting or Self-Injurious Behavior | Yes/No/Unclear | Your one-sentence observation here.
+Self-Spinning or Spinning Objects | Yes/No/Unclear | Your one-sentence observation here.
+Upper Limb Stereotypies | Yes/No/Unclear | Your one-sentence observation here.
+Background | Yes/No/Unclear | Your one-sentence observation here.
 
 CLINICAL NARRATIVE:
-<Your 3-5 sentence summary here>"""
+Write your 3-5 sentence summary here."""
 
 # ASD signal categories (for sidebar reference card)
 ASD_SIGNAL_REFERENCE = {
