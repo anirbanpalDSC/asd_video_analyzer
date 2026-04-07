@@ -93,7 +93,7 @@ def main():
                             processor.process_video(UPLOADS_DIR / saved_name)
                         # Clear previous analysis and frame selection
                         st.session_state.selected_frames_indices = set()
-                        st.session_state.frames_expanded = True
+                        st.session_state["frames_expander"] = True
                         st.session_state.selected_video = saved_name
                         # remember this upload so we don't loop
                         st.session_state.processed_upload_name = uploaded.name
@@ -152,7 +152,7 @@ def main():
                         
                         # Clear previous analysis and frame selection
                         st.session_state.selected_frames_indices = set()
-                        st.session_state.frames_expanded = True
+                        st.session_state["frames_expander"] = True
                         st.session_state.selected_video = saved_name
 
                         # Get and display transcript immediately after processing
@@ -289,12 +289,12 @@ def main():
     # Initialize session state for frame selection if not exists
     if 'selected_frames_indices' not in st.session_state:
         st.session_state.selected_frames_indices = set()
-    if 'frames_expanded' not in st.session_state:
-        st.session_state.frames_expanded = True
+    if "frames_expander" not in st.session_state:
+        st.session_state["frames_expander"] = True
 
     n_selected = sum(1 for i in range(len(info['thumbs'])) if st.session_state.get(f"frame_{i}", False))
     expander_label = f"🎞️ Frames — {len(info['thumbs'])} extracted, {n_selected} selected"
-    with st.expander(expander_label, expanded=st.session_state.frames_expanded, key="frames_expander"):
+    with st.expander(expander_label, key="frames_expander"):
         # Select All / Deselect All buttons
         col1, col2, _ = st.columns([1, 1, 8])
         with col1:
@@ -365,7 +365,7 @@ def main():
         if len(selected_frames) == 0:
             st.error("Please select at least one frame.")
         else:
-            st.session_state.frames_expanded = False
+            st.session_state["frames_expander"] = False
             with st.spinner("Analyzing with LLM..."):
                 try:
                     result = analyzer.analyze(
