@@ -47,7 +47,7 @@ def save_uploaded_file(uploaded) -> str:
 def main():
     # ── Theme injection ────────────────────────────────────────────────────
     if "theme" not in st.session_state:
-        st.session_state.theme = "dark"
+        st.session_state.theme = "light"
     st.markdown(theme.get_theme_css(st.session_state.theme), unsafe_allow_html=True)
 
     st.title("ASD Video Analyzer")
@@ -292,9 +292,9 @@ def main():
     if 'frames_expanded' not in st.session_state:
         st.session_state.frames_expanded = True
 
-    n_selected = len(st.session_state.selected_frames_indices)
+    n_selected = sum(1 for i in range(len(info['thumbs'])) if st.session_state.get(f"frame_{i}", False))
     expander_label = f"🎞️ Frames — {len(info['thumbs'])} extracted, {n_selected} selected"
-    with st.expander(expander_label, expanded=st.session_state.frames_expanded):
+    with st.expander(expander_label, expanded=st.session_state.frames_expanded, key="frames_expander"):
         # Select All / Deselect All buttons
         col1, col2, _ = st.columns([1, 1, 8])
         with col1:

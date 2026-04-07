@@ -106,6 +106,14 @@ _LIGHT_CSS = """
 /* ── Divider ── */
 hr {{ border-color: rgba(50,55,80,0.09) !important; }}
 
+/* ── Sidebar compact spacing ── */
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {{ gap: 0.2rem !important; }}
+[data-testid="stSidebar"] .element-container {{ margin-bottom: 0 !important; }}
+[data-testid="stSidebar"] hr {{ margin: 0.2rem 0 !important; }}
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {{ margin-top: 0.15rem !important; margin-bottom: 0.15rem !important; padding: 0 !important; }}
+
 /* ── Typography ── */
 .stApp, .stApp p, .stApp span, .stApp label {{ color: #17191f !important; }}
 h1, h2, h3, h4, h5, h6 {{ color: #17191f !important; font-family: 'Inter', sans-serif !important; }}
@@ -242,6 +250,14 @@ _DARK_CSS = """
 
 /* ── Divider ── */
 hr {{ border-color: rgba(200,210,240,0.08) !important; }}
+
+/* ── Sidebar compact spacing ── */
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {{ gap: 0.2rem !important; }}
+[data-testid="stSidebar"] .element-container {{ margin-bottom: 0 !important; }}
+[data-testid="stSidebar"] hr {{ margin: 0.2rem 0 !important; }}
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3 {{ margin-top: 0.15rem !important; margin-bottom: 0.15rem !important; padding: 0 !important; }}
 
 /* ── Typography ── */
 .stApp, .stApp p, .stApp span, .stApp label {{ color: #eef0f8 !important; }}

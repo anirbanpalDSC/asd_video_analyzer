@@ -72,9 +72,21 @@ def analyze(
     else:
         messages = [{"role": "user", "content": prompt}]
 
-    payload = {"model": "gemma3:27b-it-fp16", "messages": messages, "stream": False, "options": {"temperature": 0, "top_k": 1, "seed": 42}}
+    payload = {"model": "gemma3:27b-it-fp16", "messages": messages, "stream": True, "options": {"temperature": 0, "top_k": 1, "seed": 42}}
 
-    r = requests.post(API_URL, json=payload, timeout=180)
+    r = requests.post(API_URL, json=payload, timeout=(30, 600), stream=True)
     r.raise_for_status()
-    data = r.json()
-    return data.get("message", {}).get("content", "").strip()
+
+    chunks = []
+    for line in r.iter_lines():
+        if not line:
+            continue
+        try:
+            obj = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        chunks.append(obj.get("message", {}).get("content", ""))
+        if obj.get("done"):
+            break
+
+    return "".join(chunks).strip()
