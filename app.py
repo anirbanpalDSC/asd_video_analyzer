@@ -290,29 +290,55 @@ def main():
         st.warning("⏳ Video is still processing. Please wait a moment and refresh.")
         return
     
+    FRAME_LIMIT = 15
+
     # Initialize session state for frame selection if not exists
     if 'selected_frames_indices' not in st.session_state:
         st.session_state.selected_frames_indices = set()
     if "frames_expander" not in st.session_state:
         st.session_state["frames_expander"] = True
 
-    def _on_frame_check():
-        # Explicitly keep the expander open when a checkbox is toggled
-        st.session_state["frames_expander"] = True
+    @st.dialog("Frame limit reached")
+    def _show_frame_limit_dialog():
+        st.warning(
+            f"Frame selection is limited to **{FRAME_LIMIT} frames** per analysis. "
+            "Sending too many frames at once can overload the model and cause timeouts. "
+            "Please deselect some frames before adding more."
+        )
+        if st.button("OK", type="primary", use_container_width=True):
+            st.rerun()
+
+    def _make_frame_callback(frame_idx, total_frames):
+        def _callback():
+            st.session_state["frames_expander"] = True
+            if st.session_state.get(f"frame_{frame_idx}", False):
+                n = sum(1 for i in range(total_frames) if st.session_state.get(f"frame_{i}", False))
+                if n > FRAME_LIMIT:
+                    st.session_state[f"frame_{frame_idx}"] = False
+                    st.session_state["_show_frame_limit"] = True
+        return _callback
+
+    if st.session_state.pop("_show_frame_limit", False):
+        _show_frame_limit_dialog()
 
     n_selected = sum(1 for i in range(len(info['thumbs'])) if st.session_state.get(f"frame_{i}", False))
     expander_label = f"🎞️ Frames — {len(info['thumbs'])} extracted, {n_selected} selected"
     with st.expander(expander_label, expanded=st.session_state["frames_expander"]):
         # Select All / Deselect All buttons
-        col1, col2, _ = st.columns([1, 1, 8])
+        col1, col2, col3 = st.columns([1, 1, 6])
         with col1:
             if st.button("✓ Select All", use_container_width=True):
-                all_indices = set(range(len(info['thumbs'])))
-                st.session_state.selected_frames_indices = all_indices
-                for idx in all_indices:
-                    st.session_state[f"frame_{idx}"] = True
-                st.session_state["frames_expander"] = True
-                st.rerun()
+                if len(info['thumbs']) > FRAME_LIMIT:
+                    st.session_state["frames_expander"] = True
+                    st.session_state["_show_frame_limit"] = True
+                    st.rerun()
+                else:
+                    all_indices = set(range(len(info['thumbs'])))
+                    st.session_state.selected_frames_indices = all_indices
+                    for idx in all_indices:
+                        st.session_state[f"frame_{idx}"] = True
+                    st.session_state["frames_expander"] = True
+                    st.rerun()
         with col2:
             if st.button("✗ Clear All", use_container_width=True):
                 st.session_state.selected_frames_indices = set()
@@ -320,9 +346,12 @@ def main():
                     st.session_state[f"frame_{idx}"] = False
                 st.session_state["frames_expander"] = True
                 st.rerun()
+        with col3:
+            st.caption(f"Max {FRAME_LIMIT} frames per analysis to ensure reliable results.")
 
         # Display frames in a grid of 5 columns
         cols_per_row = 5
+        total_thumbs = len(info['thumbs'])
         for idx, thumb_path in enumerate(info['thumbs']):
             if idx % cols_per_row == 0:
                 cols = st.columns(cols_per_row)
@@ -333,7 +362,10 @@ def main():
                 if key not in st.session_state:
                     st.session_state[key] = idx in st.session_state.selected_frames_indices
 
-                is_selected = st.checkbox(f"Frame {idx + 1}", key=key, on_change=_on_frame_check)
+                is_selected = st.checkbox(
+                    f"Frame {idx + 1}", key=key,
+                    on_change=_make_frame_callback(idx, total_thumbs)
+                )
 
                 if is_selected:
                     st.session_state.selected_frames_indices.add(idx)
@@ -377,17 +409,51 @@ def main():
         else:
             st.session_state["frames_expander"] = False
             st.session_state.pop("analysis_result", None)
-            with st.spinner("Analyzing with LLM..."):
-                try:
-                    result = analyzer.analyze(
-                        selected_video,
-                        user_prompt=user_prompt if user_prompt != default_prompt else None,
-                        selected_thumb_paths=selected_frames,
-                        transcript=info['transcript'],
-                    )
-                    st.session_state["analysis_result"] = result
-                except Exception as e:
-                    st.error(f"Analysis failed: {str(e)}")
+            try:
+                import threading, time as _time
+                prompt_arg = user_prompt if user_prompt != default_prompt else None
+                stream = analyzer.analyze_stream(
+                    selected_video,
+                    user_prompt=prompt_arg,
+                    selected_thumb_paths=selected_frames,
+                    transcript=info['transcript'],
+                )
+
+                # Collect stream in background thread; poll from main thread
+                # so Streamlit can update the status widget live.
+                _tokens: list = []
+                _err: list = [None]
+                _done: list = [False]
+
+                def _collect():
+                    try:
+                        for tok in stream:
+                            _tokens.append(tok)
+                    except Exception as exc:
+                        _err[0] = exc
+                    finally:
+                        _done[0] = True
+
+                threading.Thread(target=_collect, daemon=True).start()
+
+                status = st.empty()
+                _start = _time.time()
+                while not _done[0]:
+                    elapsed = int(_time.time() - _start)
+                    n = len(_tokens)
+                    if n == 0:
+                        status.info(f"Uploading frames & waiting for model… ({elapsed}s)")
+                    else:
+                        status.info(f"Generating… {n} tokens received ({elapsed}s)")
+                    _time.sleep(0.5)
+
+                status.empty()
+                if _err[0]:
+                    raise _err[0]
+                result = "".join(_tokens).strip()
+                st.session_state["analysis_result"] = result
+            except Exception as e:
+                st.error(f"Analysis failed: {str(e)}")
 
     # Always render stored result (survives theme toggles and other reruns)
     if st.session_state.get("analysis_result"):
