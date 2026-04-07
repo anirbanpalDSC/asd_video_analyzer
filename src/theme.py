@@ -19,6 +19,12 @@ _LIGHT_CSS = """
   background: transparent !important;
 }}
 
+/* ── Top header banner ── */
+[data-testid="stHeader"] {{
+  background: #eef2f8 !important;
+  border-bottom: 1px solid rgba(50,55,80,0.08) !important;
+}}
+
 /* ── Sidebar ── */
 [data-testid="stSidebar"] {{
   background: rgba(255,255,255,0.72) !important;
@@ -37,7 +43,8 @@ _LIGHT_CSS = """
 }}
 
 /* ── Buttons ── */
-.stButton > button {{
+.stButton > button,
+[data-testid^="stBaseButton"] {{
   background: rgba(26,108,245,0.08) !important;
   color: #1a6cf5 !important;
   border: 1.5px solid rgba(26,108,245,0.22) !important;
@@ -46,16 +53,19 @@ _LIGHT_CSS = """
   font-family: 'Inter', sans-serif !important;
   transition: background 0.2s, box-shadow 0.2s !important;
 }}
-.stButton > button:hover {{
+.stButton > button:hover,
+[data-testid^="stBaseButton"]:hover {{
   background: rgba(26,108,245,0.16) !important;
   box-shadow: 0 4px 20px rgba(26,108,245,0.18) !important;
 }}
-.stButton > button[kind="primary"] {{
+.stButton > button[kind="primary"],
+[data-testid="stBaseButton-primary"] {{
   background: #1a6cf5 !important;
   color: #fff !important;
   border-color: #1a6cf5 !important;
 }}
-.stButton > button[kind="primary"]:hover {{
+.stButton > button[kind="primary"]:hover,
+[data-testid="stBaseButton-primary"]:hover {{
   background: #1558d4 !important;
   box-shadow: 0 4px 20px rgba(26,108,245,0.35) !important;
 }}
@@ -103,6 +113,43 @@ _LIGHT_CSS = """
   border: none !important;
 }}
 
+/* ── Expander header (summary bar) ── */
+[data-testid="stExpander"] summary {{
+  background: rgba(255,255,255,0.72) !important;
+  color: #17191f !important;
+  border-radius: 14px !important;
+}}
+[data-testid="stExpander"] summary:hover {{
+  background: rgba(255,255,255,0.90) !important;
+}}
+[data-testid="stExpander"] summary * {{
+  color: #17191f !important;
+}}
+
+/* ── File uploader (light mode) ── */
+[data-testid="stFileUploader"] {{
+  background: transparent !important;
+}}
+[data-testid="stFileUploaderDropzone"],
+[data-testid="stFileUploadDropzone"] {{
+  background: rgba(255,255,255,0.72) !important;
+  border: 1.5px dashed rgba(50,55,80,0.25) !important;
+  border-radius: 14px !important;
+  color: #17191f !important;
+}}
+[data-testid="stFileUploaderDropzone"] *,
+[data-testid="stFileUploadDropzone"] * {{
+  color: #17191f !important;
+  background: transparent !important;
+}}
+[data-testid="stFileUploaderDropzone"] button,
+[data-testid="stFileUploadDropzone"] button {{
+  background: rgba(26,108,245,0.08) !important;
+  color: #1a6cf5 !important;
+  border: 1.5px solid rgba(26,108,245,0.22) !important;
+  border-radius: 100px !important;
+}}
+
 /* ── Divider ── */
 hr {{ border-color: rgba(50,55,80,0.09) !important; }}
 
@@ -117,8 +164,22 @@ hr {{ border-color: rgba(50,55,80,0.09) !important; }}
 .stApp, .stApp p, .stApp span, .stApp label {{ color: #17191f !important; }}
 h1, h2, h3, h4, h5, h6 {{ color: #17191f !important; font-family: 'Inter', sans-serif !important; }}
 
-/* ── Transcript / text areas ── */
-[data-testid="stTextArea"] textarea {{ color: #17191f !important; }}
+/* ── Transcript / text areas (including disabled state) ── */
+[data-testid="stTextArea"] textarea,
+[data-testid="stTextArea"] textarea:disabled {{
+  color: #17191f !important;
+  -webkit-text-fill-color: #17191f !important;
+  background: rgba(255,255,255,0.72) !important;
+  opacity: 1 !important;
+}}
+
+/* ── Caption code badges (selected video label) ── */
+[data-testid="stSidebar"] code {{
+  background: rgba(26,108,245,0.08) !important;
+  color: #1a6cf5 !important;
+  border-radius: 6px !important;
+  padding: 2px 6px !important;
+}}
 </style>
 <script>
 if (!window._stFrameShiftInit) {{
