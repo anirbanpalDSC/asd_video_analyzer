@@ -231,7 +231,17 @@ def main():
     # =========================================================================
     
     selected_video = st.session_state.get('selected_video')
-    
+
+    # Clear frame selection state whenever the active video changes
+    if selected_video != st.session_state.get('_last_video'):
+        st.session_state['_last_video'] = selected_video
+        st.session_state['selected_frames_indices'] = set()
+        st.session_state.pop('analysis_result', None)
+        st.session_state['frames_expander'] = True
+        # Clear all individual frame checkbox keys
+        for k in [k for k in st.session_state if k.startswith('frame_')]:
+            del st.session_state[k]
+
     # Signal reference and release notes — always visible in sidebar
     with st.sidebar:
         st.divider()
@@ -424,8 +434,9 @@ def main():
     
     # Get selected frames paths
     selected_frames = [
-        info['thumbs'][idx] 
+        info['thumbs'][idx]
         for idx in sorted(st.session_state.selected_frames_indices)
+        if idx < len(info['thumbs'])
     ]
     
     if not selected_frames:
