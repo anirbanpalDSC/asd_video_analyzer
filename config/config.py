@@ -34,15 +34,30 @@ Signal Numbers (used below):
 9. Upper Limb Stereotypies
 10. Background (not-applicable / no ASD signal present)
 
-STEP 1: For each frame individually, record whether each signal is present (Yes) or absent (No).
-STEP 2: Provide an aggregate observed status and a brief note for each signal.
+ASSESSABILITY RULES — apply before marking any signal:
+- Mark Unclear (never Yes or No) when the required evidence for that signal is absent from the frame and transcript.
+- Do not infer a signal from indirect cues. Only mark Yes when the defining behaviour is directly observable.
+- Required evidence per signal:
+  1. Absence or Avoidance of Eye Contact: the subject's face must be fully visible, a social partner must be present in the scene, and the camera angle must allow gaze direction to be reliably determined. If any condition is unmet → Unclear.
+  2. Aggressive Behavior: at least one other person must be present and physical contact or a directed physical threat must be visible in the frame. If no other person is present → Unclear.
+  3. Hyper- or Hyporeactivity to Sensory Input: a sensory stimulus (sound, touch, light, texture) must be identifiable in the frame or transcript, AND a visible behavioural response (e.g. covering ears, flinching, ignoring pain) must be present. If either is absent → Unclear.
+  4. Non-Responsiveness to Verbal Interaction: the transcript or audio must show that someone directed speech at the subject in this segment, AND the subject's response (or absence of response) must be observable. If no directed speech is evidenced → Unclear.
+  5. Non-Typical Language: spoken output from the subject must be present in the transcript or audio. If the subject produces no speech in this segment → Unclear.
+  6. Object Lining-Up: discrete objects must be clearly visible in the frame and their spatial arrangement (lined, sorted, or sequenced) must be directly discernible. If objects are not visible or arrangement cannot be assessed → Unclear.
+  7. Self-Hitting or Self-Injurious Behavior: the subject's hands, head, or relevant body part must be clearly visible and a self-directed strike, bite, or impact must be directly observable in the frame. If the relevant body parts are not visible → Unclear.
+  8. Self-Spinning or Spinning Objects: the subject's full body or the spinning object must be visible and rotational motion must be directly observable. A single static frame where posture is ambiguous is not sufficient → Unclear.
+  9. Upper Limb Stereotypies: both arms or hands must be visible and a repetitive non-functional motor pattern (flapping, waving, finger-flicking) must be directly observable. If arms/hands are not visible → Unclear.
+  10. Background: mark Yes only when no other signal (1–9) can be assessed as Yes, and the frame contains no behavioural evidence relevant to ASD signals.
+
+STEP 1: Apply the assessability rules above, then for each frame record Yes, No, or Unclear for every signal.
+STEP 2: Provide an aggregate observed status and a brief note for each signal across all frames.
 STEP 3: Write a brief clinical narrative.
 
 Respond exactly in this format — no extra text outside the markers:
 
 FRAME_DETECTIONS:
-Frame_1: 1=Yes,2=No,3=No,4=No,5=No,6=No,7=No,8=No,9=No,10=No
-Frame_2: 1=Yes,2=No,3=No,4=No,5=No,6=No,7=No,8=No,9=No,10=No
+Frame_1: 1=No,2=No,3=No,4=No,5=No,6=No,7=No,8=No,9=No,10=Yes
+Frame_2: 1=No,2=No,3=No,4=No,5=No,6=No,7=No,8=No,9=No,10=Yes
 ...continue one line per frame for all frames...
 
 SIGNALS:
