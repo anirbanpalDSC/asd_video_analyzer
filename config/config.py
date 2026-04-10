@@ -56,8 +56,12 @@ STEP 3: Write a brief clinical narrative.
 Respond exactly in this format — no extra text outside the markers:
 
 FRAME_DETECTIONS:
-Frame_1: 1=No,2=No,3=No,4=No,5=No,6=No,7=No,8=No,9=No,10=Yes
-Frame_2: 1=No,2=No,3=No,4=No,5=No,6=No,7=No,8=No,9=No,10=Yes
+Frame_1: 1=Yes,2=No,3=Yes,4=Yes,5=No,6=No,7=No,8=No,9=Yes,10=No
+Frame_2: 1=Yes,2=No,3=Yes,4=Yes,5=Yes,6=No,7=No,8=Yes,9=Yes,10=No
+Frame_3: 1=Yes,2=Yes,3=Yes,4=Yes,5=No,6=No,7=Yes,8=No,9=Yes,10=No
+Frame_4: 1=Unclear,2=No,3=No,4=No,5=No,6=No,7=No,8=No,9=Yes,10=No
+Frame_5: 1=No,2=No,3=Unclear,4=Unclear,5=No,6=No,7=No,8=No,9=No,10=No
+Frame_6: 1=No,2=No,3=No,4=No,5=No,6=No,7=No,8=No,9=No,10=Yes
 ...continue one line per frame for all frames...
 
 SIGNALS:
