@@ -1,7 +1,7 @@
 """Shared Streamlit UI components for the ASD Video Analyzer app."""
 
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import streamlit as st
 
@@ -35,15 +35,15 @@ def get_default_asd_prompt() -> str:
 # Frame-detection helpers
 # ---------------------------------------------------------------------------
 
-def _parse_frame_detections(section_text: str) -> Dict[int, List[bool]]:
+def _parse_frame_detections(section_text: str) -> Dict[int, List]:
     """Parse the FRAME_DETECTIONS section into per-signal presence lists.
 
     Expected line format (one per frame):
         Frame_1: 1=Yes,2=No,3=Yes,...,10=No
 
-    Returns a dict {signal_index (1-based): [True/False, ...per frame]}.
+    Returns a dict {signal_index (1-based): [True/False/None, ...per frame]}.
     """
-    detections: Dict[int, List[bool]] = {i + 1: [] for i in range(len(SIGNAL_NAMES))}
+    detections: Dict[int, List] = {i + 1: [] for i in range(len(SIGNAL_NAMES))}
     for line in section_text.strip().split("\n"):
         line = line.strip()
         if not line:
@@ -61,7 +61,13 @@ def _parse_frame_detections(section_text: str) -> Dict[int, List[bool]]:
             idx_str, val_str = pair.split("=", 1)
             try:
                 idx = int(idx_str.strip())
-                present = val_str.strip().lower() in ("yes", "true", "1")
+                v = val_str.strip().lower()
+                if v in ("yes", "true", "1"):
+                    present: bool | None = True
+                elif v in ("unclear", "unknown", "n/a"):
+                    present = None
+                else:
+                    present = False
                 if 1 <= idx <= len(SIGNAL_NAMES):
                     detections[idx].append(present)
             except ValueError:
@@ -69,12 +75,16 @@ def _parse_frame_detections(section_text: str) -> Dict[int, List[bool]]:
     return detections
 
 
-def _compute_confidence(detection_list: List[bool]) -> Tuple[str, int, int]:
-    """Return (confidence_label, detected_count, total_frames)."""
-    total = len(detection_list)
+def _compute_confidence(detection_list: List) -> Tuple[str, int, int]:
+    """Return (confidence_label, detected_count, assessable_frames).
+
+    None values (Unclear) are excluded from both numerator and denominator.
+    """
+    assessable = [v for v in detection_list if v is not None]
+    total = len(assessable)
     if total == 0:
         return "N/A", 0, 0
-    count = sum(detection_list)
+    count = sum(1 for v in assessable if v)
     pct = count / total
     if pct >= _HIGH_THRESHOLD:
         label = "High"
@@ -208,7 +218,7 @@ def parse_and_display_analysis(analysis_text: str) -> None:
         if use_frequency and sig_idx is not None:
             det_list = frame_detections.get(sig_idx, [])
             conf_label, detected, total = _compute_confidence(det_list)
-            frames_col = f"{detected} / {total} ({int(detected/total*100) if total else 0}%)"
+            frames_col = f"{detected} / {total} frames assessed ({int(detected/total*100) if total else 0}%)"
         else:
             conf_label = row["_llm_confidence"] or "N/A"
             frames_col = "N/A"
