@@ -23,3 +23,20 @@ whisper_cache/
 # Model weights (large binary files)
 models/*.pkl
 models/**/*.pkl
+
+# Partial download artifacts
+models/**/*.part
+
+# YOLOv8 / PyTorch exported weights
+models/**/*.pt
+models/**/*.pth
+
+# MediaPipe task bundles
+models/**/*.task
+models/**/*.tflite
+
+# ONNX exports
+models/**/*.onnx
+
+# Exclude entire downloaded weight subdirectories (e.g. MPIIGaze folds)
+models/L2CSNet/
