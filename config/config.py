@@ -47,7 +47,7 @@ ASSESSABILITY RULES — apply before marking any signal:
   7. Self-Hitting or Self-Injurious Behavior: the subject's hands, head, or relevant body part must be clearly visible and a self-directed strike, bite, or impact must be directly observable in the frame. If the relevant body parts are not visible → Unclear.
   8. Self-Spinning or Spinning Objects: the subject's full body or the spinning object must be visible and rotational motion must be directly observable. A single static frame where posture is ambiguous is not sufficient → Unclear.
   9. Upper Limb Stereotypies: both arms or hands must be visible and a repetitive non-functional motor pattern (flapping, waving, finger-flicking) must be directly observable. If arms/hands are not visible → Unclear.
-  10. Background: mark Yes only when no other signal (1–9) can be assessed as Yes, and the frame contains no behavioural evidence relevant to ASD signals.
+  10. Background: mark Yes only when ALL signals 1–9 are definitively No — meaning evidence was present and the behaviour was clearly absent. If any signal is Unclear, Background must be No. Background=Yes is the rarest outcome; most frames will have at least one signal as Yes or Unclear.
 
 STEP 1: Apply the assessability rules above, then for each frame record Yes, No, or Unclear for every signal.
 STEP 2: Provide an aggregate observed status and a brief note for each signal across all frames.
