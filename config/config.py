@@ -16,6 +16,15 @@ ALLOWED_EXTENSIONS = {"mp4", "mov", "avi", "mkv", "webm"}
 # External LLM API (same as the PHP project)
 API_URL = "https://gs1.cht77.com/api/chat"
 
+# Frames per second to annotate with specialized models.
+# Lower this to reduce processing time for long videos (e.g. 1.0 for 60-min videos).
+# Must be <= the thumbnail extraction fps (2.0). Non-annotated thumbnails are still
+# displayed and selectable; they simply have no FRAME_ANNOTATIONS entry in the prompt.
+ANNOTATION_FPS: float = 2.0
+
+# Path to the L2CS-Net gaze model weights file.
+GAZE_WEIGHTS_PATH = ROOT / "models" / "L2CSNet_gaze360.pkl"
+
 # =========================================================================
 # ASD Behavioral Analysis Configuration
 # =========================================================================
