@@ -422,3 +422,50 @@ def _annotate_language(
         observations.append("pronoun reversal candidate ('you' used in first-person context).")
 
     return " ".join(observations)
+
+
+# ---------------------------------------------------------------------------
+# Public API
+# ---------------------------------------------------------------------------
+
+def annotate_frames(
+    thumb_paths: list[Path],
+    transcript_json: Optional[Path],
+    fps: float,
+) -> dict[str, dict[str, str]]:
+    """Annotate a list of thumbnail frames with all specialized models.
+
+    Parameters
+    ----------
+    thumb_paths:
+        Ordered list of thumbnail Paths (e.g. thumb_00001.jpg …).
+    transcript_json:
+        Path to a Whisper word-timestamp JSON file (.words.json), or None.
+    fps:
+        Thumbnail extraction fps (used to derive frame timestamps).
+
+    Returns
+    -------
+    dict keyed by thumbnail basename (e.g. "thumb_00001.jpg"), with sub-dict:
+        {"gaze": str, "pose": str, "objects": str, "language": str}
+    """
+    from config.config import ANNOTATION_FPS
+
+    stride = max(1, round(fps / ANNOTATION_FPS))
+    all_words = _load_words_json(transcript_json) if transcript_json else []
+    annotations: dict[str, dict[str, str]] = {}
+
+    for i, thumb in enumerate(thumb_paths):
+        if i % stride != 0:
+            continue
+        frame_bgr = cv2.imread(str(thumb))
+        if frame_bgr is None:
+            continue
+        annotations[thumb.name] = {
+            "gaze":     _annotate_gaze(frame_bgr),
+            "pose":     _annotate_pose(frame_bgr),
+            "objects":  _annotate_objects(frame_bgr),
+            "language": _annotate_language(thumb, all_words, fps),
+        }
+
+    return annotations
