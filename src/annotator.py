@@ -58,17 +58,12 @@ def _window_words(
     t_center: float,
     window: float = 3.0,
 ) -> list[dict]:
-    """Return words that overlap or start within the temporal window around t_center.
-
-    Look-back is 2*window seconds (speech context before the frame is wider);
-    look-ahead is window seconds.  A word is included when its start time falls
-    in [t_center - 2*window, t_center + window].
-    """
-    lo = t_center - window * 2
+    """Return words whose midpoint falls within [t_center - window, t_center + window]."""
+    lo = t_center - window
     hi = t_center + window
     return [
         w for w in all_words
-        if lo <= w.get("start", 0) <= hi
+        if lo <= (w.get("start", 0) + w.get("end", 0)) / 2 <= hi
     ]
 
 

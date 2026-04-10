@@ -36,9 +36,9 @@ def test_is_linear_too_few_objects():
 def test_window_words_returns_words_in_range():
     from src.annotator import _window_words
     words = [
-        {"word": "hello", "start": 1.0, "end": 1.5},
-        {"word": "world", "start": 5.0, "end": 5.5},
-        {"word": "bye",   "start": 15.0, "end": 15.5},
+        {"word": "hello", "start": 2.5, "end": 3.0},   # midpoint 2.75 — inside window
+        {"word": "world", "start": 5.0, "end": 5.5},   # midpoint 5.25 — inside window
+        {"word": "bye",   "start": 15.0, "end": 15.5}, # midpoint 15.25 — outside window
     ]
     result = _window_words(words, t_center=5.0, window=3.0)
     assert len(result) == 2
