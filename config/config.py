@@ -47,7 +47,7 @@ ASSESSABILITY RULES — apply before marking any signal:
   7. Self-Hitting or Self-Injurious Behavior: the subject's hands, head, or relevant body part must be clearly visible and a self-directed strike, bite, or impact must be directly observable in the frame. If the relevant body parts are not visible → Unclear.
   8. Self-Spinning or Spinning Objects: the subject's full body or the spinning object must be visible and rotational motion must be directly observable. A single static frame where posture is ambiguous is not sufficient → Unclear.
   9. Upper Limb Stereotypies: both arms or hands must be visible and a repetitive non-functional motor pattern (flapping, waving, finger-flicking) must be directly observable. If arms/hands are not visible → Unclear.
-  10. Background: mark Yes only when ALL signals 1–9 are definitively No — meaning evidence was present and the behaviour was clearly absent. If any signal is Unclear, Background must be No. Background=Yes is the rarest outcome; most frames will have at least one signal as Yes or Unclear.
+  10. Background: mark Yes only when ALL signals 1–9 are definitively No. A signal is definitively No only if the required evidence was present in the frame and the behaviour was clearly absent. If any signal is Unclear, Background must be No. Background=Yes is the rarest outcome; most frames will have at least one signal as Yes or Unclear.
 
 STEP 1: Apply the assessability rules above, then for each frame record Yes, No, or Unclear for every signal.
 STEP 2: Provide an aggregate observed status and a brief note for each signal across all frames.
@@ -90,7 +90,7 @@ ASD_SIGNAL_REFERENCE = {
     "Self-Hitting or Self-Injurious Behavior": "Repetitive physical actions directed toward oneself that may cause harm or discomfort, such as hitting, biting, head-banging, or scratching, often associated with emotional dysregulation or sensory modulation difficulties.",
     "Self-Spinning or Spinning Objects": "Repetitive rotational movements of the body or objects, performed persistently or with unusual intensity, typically reflecting sensory-seeking or self-stimulatory behavior.",
     "Upper Limb Stereotypies": "Repetitive, non-functional motor movements involving the arms or hands, such as flapping, waving, or finger flicking, often occurring during heightened emotional or sensory states.",
-    "Background": "Contextual environmental and situational information present during observation, when no other signals can be detected.",
+    "Background": "Assigned when no ASD-related behavioural signal (1–9) is present; requires that all signals were directly assessable and clearly absent. Frames with any Unclear signal do not qualify.",
 }
 
 
