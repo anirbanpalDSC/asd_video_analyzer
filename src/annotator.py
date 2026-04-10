@@ -319,3 +319,62 @@ def _annotate_pose(frame_bgr: np.ndarray) -> str:
 
     except Exception as e:
         return f"Pose unassessable (error: {type(e).__name__})."
+
+
+# ---------------------------------------------------------------------------
+# Object annotation — Signal 6 (YOLOv8m)
+# ---------------------------------------------------------------------------
+
+def _load_yolo_model():
+    global _yolo_model
+    if _yolo_model is not None:
+        return _yolo_model
+    from ultralytics import YOLO
+    _yolo_model = YOLO("yolov8m.pt")   # downloads weights on first call (~50 MB)
+    return _yolo_model
+
+
+def _annotate_objects(frame_bgr: np.ndarray) -> str:
+    """Run YOLOv8m and return a natural language object arrangement description."""
+    try:
+        model = _load_yolo_model()
+        results = model(frame_bgr, verbose=False)
+        boxes = results[0].boxes
+
+        if boxes is None or len(boxes) == 0:
+            return "No objects detected in frame."
+
+        cls_ids = boxes.cls.cpu().numpy().astype(int)
+        xyxy    = boxes.xyxy.cpu().numpy()
+        names   = model.names
+
+        # Group by class name
+        class_groups: dict[str, list[tuple[float, float]]] = {}
+        for cls_id, box in zip(cls_ids, xyxy):
+            label = names[cls_id]
+            cx = float((box[0] + box[2]) / 2) / frame_bgr.shape[1]   # normalize
+            cy = float((box[1] + box[3]) / 2) / frame_bgr.shape[0]
+            class_groups.setdefault(label, []).append((cx, cy))
+
+        observations = []
+        for label, centers in class_groups.items():
+            if len(centers) >= 3 and _is_linear(centers):
+                observations.append(
+                    f"{len(centers)} objects of class '{label}' in a linear arrangement — "
+                    "consistent with object lining-up (signal 6)."
+                )
+
+        # Flag round/spinning objects
+        spinning_classes = {"sports ball", "frisbee", "clock", "donut"}
+        for label in class_groups:
+            if label in spinning_classes:
+                observations.append(
+                    f"Round object detected: '{label}' — may be relevant to spinning behavior (signal 8)."
+                )
+
+        if not observations:
+            return "No linear or symmetric object arrangement detected."
+        return " ".join(observations)
+
+    except Exception as e:
+        return f"Object detection unavailable (error: {type(e).__name__})."
