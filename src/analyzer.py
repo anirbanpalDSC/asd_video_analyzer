@@ -80,7 +80,7 @@ def analyze(
         "model": "gemma3:27b-it-fp16",
         "messages": messages,
         "stream": True,
-        "options": {"temperature": 0, "top_k": 1, "seed": 42},
+        "options": {"temperature": 0, "seed": 42},
     }
 
     r = requests.post(API_URL, json=payload, timeout=(30, 120), stream=True)
@@ -137,7 +137,7 @@ def analyze_stream(
         "model": "gemma3:27b-it-fp16",
         "messages": messages,
         "stream": True,
-        "options": {"temperature": 0, "top_k": 1, "seed": 42},
+        "options": {"temperature": 0, "seed": 42},
     }
 
     r = requests.post(API_URL, json=payload, timeout=(30, 120), stream=True)
