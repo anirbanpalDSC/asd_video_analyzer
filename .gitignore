@@ -19,3 +19,7 @@ processed/
 .claude/
 copilot-instructions.md
 whisper_cache/
+
+# Model weights (large binary files)
+models/*.pkl
+models/**/*.pkl
