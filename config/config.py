@@ -25,6 +25,14 @@ ANNOTATION_FPS: float = 2.0
 # Path to the L2CS-Net gaze model weights file.
 GAZE_WEIGHTS_PATH = ROOT / "models" / "L2CSNet_gaze360.pkl"
 
+# Paths to MediaPipe Tasks model bundles (downloaded on first use).
+POSE_MODEL_PATH  = ROOT / "models" / "pose_landmarker_full.task"
+HANDS_MODEL_PATH = ROOT / "models" / "hand_landmarker.task"
+
+# Download URLs for MediaPipe Tasks model bundles.
+POSE_MODEL_URL  = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task"
+HANDS_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task"
+
 # =========================================================================
 # ASD Behavioral Analysis Configuration
 # =========================================================================

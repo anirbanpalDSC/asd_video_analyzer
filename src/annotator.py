@@ -178,3 +178,144 @@ def _annotate_gaze(frame_bgr: np.ndarray) -> str:
         return f"Gaze model unavailable: {e}"
     except Exception as e:
         return f"Gaze unassessable (inference error: {type(e).__name__})."
+
+
+# ---------------------------------------------------------------------------
+# Pose annotation — Signals 7, 8, 9 (MediaPipe Pose + Hands)
+# ---------------------------------------------------------------------------
+
+# MediaPipe landmark indices
+_MP_LEFT_SHOULDER  = 11
+_MP_RIGHT_SHOULDER = 12
+_MP_LEFT_ELBOW     = 13
+_MP_RIGHT_ELBOW    = 14
+_MP_LEFT_WRIST     = 15
+_MP_RIGHT_WRIST    = 16
+_MP_LEFT_HIP       = 23
+_MP_RIGHT_HIP      = 24
+
+
+def _download_model_if_needed(model_path, model_url) -> None:
+    """Download a MediaPipe Tasks model bundle if not already present."""
+    if model_path.exists():
+        return
+    import urllib.request
+    model_path.parent.mkdir(parents=True, exist_ok=True)
+    urllib.request.urlretrieve(model_url, model_path)
+
+
+def _load_pose_model():
+    global _pose_model
+    if _pose_model is not None:
+        return _pose_model
+    import mediapipe as mp
+    from config.config import POSE_MODEL_PATH, POSE_MODEL_URL
+    _download_model_if_needed(POSE_MODEL_PATH, POSE_MODEL_URL)
+    options = mp.tasks.vision.PoseLandmarkerOptions(
+        base_options=mp.tasks.BaseOptions(model_asset_path=str(POSE_MODEL_PATH)),
+        running_mode=mp.tasks.vision.RunningMode.IMAGE,
+        num_poses=1,
+        min_pose_detection_confidence=0.5,
+    )
+    _pose_model = mp.tasks.vision.PoseLandmarker.create_from_options(options)
+    return _pose_model
+
+
+def _load_hands_model():
+    global _hands_model
+    if _hands_model is not None:
+        return _hands_model
+    import mediapipe as mp
+    from config.config import HANDS_MODEL_PATH, HANDS_MODEL_URL
+    _download_model_if_needed(HANDS_MODEL_PATH, HANDS_MODEL_URL)
+    options = mp.tasks.vision.HandLandmarkerOptions(
+        base_options=mp.tasks.BaseOptions(model_asset_path=str(HANDS_MODEL_PATH)),
+        running_mode=mp.tasks.vision.RunningMode.IMAGE,
+        num_hands=2,
+        min_hand_detection_confidence=0.5,
+    )
+    _hands_model = mp.tasks.vision.HandLandmarker.create_from_options(options)
+    return _hands_model
+
+
+def _annotate_pose(frame_bgr: np.ndarray) -> str:
+    """Return a natural language posture description from MediaPipe landmarks."""
+    try:
+        import mediapipe as mp
+        rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
+
+        pose = _load_pose_model()
+        pose_results = pose.detect(mp_image)
+
+        hands = _load_hands_model()
+        hands_results = hands.detect(mp_image)
+
+        if not pose_results.pose_landmarks:
+            return "Pose not detected — body not visible in frame."
+
+        lm = pose_results.pose_landmarks[0]
+
+        l_shoulder = lm[_MP_LEFT_SHOULDER]
+        r_shoulder = lm[_MP_RIGHT_SHOULDER]
+        l_wrist    = lm[_MP_LEFT_WRIST]
+        r_wrist    = lm[_MP_RIGHT_WRIST]
+        l_elbow    = lm[_MP_LEFT_ELBOW]
+        r_elbow    = lm[_MP_RIGHT_ELBOW]
+        l_hip      = lm[_MP_LEFT_HIP]
+        r_hip      = lm[_MP_RIGHT_HIP]
+
+        observations = []
+
+        # --- Signal 9: wrist elevation (flapping posture) ---
+        left_elevated  = l_wrist.y < l_shoulder.y   # y axis: smaller = higher in frame
+        right_elevated = r_wrist.y < r_shoulder.y
+        if left_elevated and right_elevated:
+            observations.append(
+                "Both wrists elevated above shoulders with arms extended laterally — "
+                "consistent with mid-flap posture (signal 9)."
+            )
+        elif left_elevated or right_elevated:
+            side = "Left" if left_elevated else "Right"
+            observations.append(
+                f"{side} wrist elevated above shoulder — partial flap posture possible (signal 9)."
+            )
+
+        # --- Signal 8: rotational stance ---
+        shoulder_width = abs(l_shoulder.x - r_shoulder.x)
+        l_arm_extended = abs(l_wrist.x - l_shoulder.x) > shoulder_width * 0.8
+        r_arm_extended = abs(r_wrist.x - r_shoulder.x) > shoulder_width * 0.8
+        hip_width      = abs(l_hip.x - r_hip.x)
+        if l_arm_extended and r_arm_extended and shoulder_width > hip_width * 1.2:
+            observations.append(
+                "Body rotational stance: arms outstretched, shoulder span exceeds hip width — "
+                "consistent with mid-spin posture (signal 8)."
+            )
+
+        # --- Signal 7: hand-to-body contact ---
+        if hands_results.hand_landmarks:
+            for hand_lm in hands_results.hand_landmarks:
+                hw = hand_lm[0]
+                torso_x_lo = min(l_shoulder.x, r_shoulder.x)
+                torso_x_hi = max(l_shoulder.x, r_shoulder.x)
+                torso_y_lo = min(l_shoulder.y, r_shoulder.y)
+                torso_y_hi = max(l_hip.y, r_hip.y)
+                in_torso_x = torso_x_lo - 0.1 <= hw.x <= torso_x_hi + 0.1
+                in_torso_y = torso_y_lo - 0.1 <= hw.y <= torso_y_hi + 0.1
+                if in_torso_x and in_torso_y:
+                    observations.append(
+                        "Hand in contact with torso region — "
+                        "possible self-hitting evidence (signal 7)."
+                    )
+                if hw.y < min(l_shoulder.y, r_shoulder.y) - 0.05:
+                    observations.append(
+                        "Hand elevated near head region — "
+                        "possible self-hitting evidence (signal 7)."
+                    )
+
+        if not observations:
+            return "Pose detected. No atypical posture patterns identified."
+        return " ".join(observations)
+
+    except Exception as e:
+        return f"Pose unassessable (error: {type(e).__name__})."
