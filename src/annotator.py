@@ -132,3 +132,49 @@ def _thumb_timestamp(thumb_path: Path, fps: float) -> float:
     if not m:
         return 0.0
     return (int(m.group(1)) - 1) / fps
+
+
+# ---------------------------------------------------------------------------
+# Gaze annotation — Signal 1 (L2CS-Net)
+# ---------------------------------------------------------------------------
+
+def _load_gaze_pipeline():
+    global _gaze_pipeline
+    if _gaze_pipeline is not None:
+        return _gaze_pipeline
+    import torch
+    from l2cs import Pipeline
+    from config.config import GAZE_WEIGHTS_PATH
+
+    if not GAZE_WEIGHTS_PATH.exists():
+        raise FileNotFoundError(
+            f"L2CS-Net weights not found at {GAZE_WEIGHTS_PATH}. "
+            "Run Task 1 Step 2 of the implementation plan to download them."
+        )
+    device = torch.device(_get_device())
+    _gaze_pipeline = Pipeline(
+        weights=GAZE_WEIGHTS_PATH,
+        arch="ResNet50",
+        device=device,
+        include_detector=True,
+        confidence_threshold=0.5,
+    )
+    return _gaze_pipeline
+
+
+def _annotate_gaze(frame_bgr: np.ndarray) -> str:
+    """Run L2CS-Net on a BGR frame and return a natural language gaze string."""
+    try:
+        pipeline = _load_gaze_pipeline()
+        import torch
+        with torch.no_grad():
+            results = pipeline.step(frame_bgr)
+        if results is None or len(results.pitch) == 0:
+            return "Face not detected — gaze unassessable."
+        pitch_deg = float(np.degrees(results.pitch[0]))
+        yaw_deg = float(np.degrees(results.yaw[0]))
+        return _gaze_to_description(pitch_deg, yaw_deg)
+    except FileNotFoundError as e:
+        return f"Gaze model unavailable: {e}"
+    except Exception as e:
+        return f"Gaze unassessable (inference error: {type(e).__name__})."
