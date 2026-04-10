@@ -47,7 +47,7 @@ ASSESSABILITY RULES — apply before marking any signal:
   7. Self-Hitting or Self-Injurious Behavior: the subject's hands, head, or the body part targeted (e.g., arms for biting, torso for hitting) must be clearly visible and posture, body position, or visible marks (e.g., redness, contact position) consistent with self-directed contact must be present in the frame. If the targeted body parts are not visible → Unclear.
   8. Self-Spinning or Spinning Objects: the subject's full body or the spinning object must be visible and body orientation or posture consistent with rotational movement and not explained by another functional activity (e.g., arms outstretched mid-spin, spinning stance without object interaction) must be present in the frame. If neither is assessable → Unclear.
   9. Upper Limb Stereotypies: both arms or hands must be visible and arm or hand posture consistent with a non-functional motor pattern and not explained by object interaction or purposeful reach (e.g., elevated or extended arms without object contact, rigid finger positions, mid-flap posture) must be present in the frame. If arms/hands are not visible → Unclear.
-  10. Background: mark Yes only when ALL signals 1–9 are definitively No. A signal is definitively No only if the required evidence was present in the frame and the behaviour was clearly absent. If any signal is Unclear, Background must be No. Background=Yes is the rarest outcome; most frames will have at least one signal as Yes or Unclear.
+  10. Background: mark Yes only when ALL signals 1–9 are definitively No. A signal counts as definitively No only if you marked it No (not Unclear) in your per-signal assessment above. If any signal is Unclear, Background must be No. Background=Yes is the rarest outcome; most frames will have at least one signal as Yes or Unclear.
 
 STEP 1: Apply the assessability rules above, then for each frame record Yes, No, or Unclear for every signal.
 STEP 2: Provide an aggregate observed status and a brief note for each signal across all frames.
@@ -55,6 +55,7 @@ STEP 3: Write a brief clinical narrative.
 
 Respond exactly in this format — no extra text outside the markers:
 
+(Output one line per frame for every frame provided — do not skip any frame.)
 FRAME_DETECTIONS:
 Frame_1: 1=Yes,2=No,3=Yes,4=Yes,5=No,6=No,7=No,8=No,9=Yes,10=No
 Frame_2: 1=Yes,2=No,3=Yes,4=Yes,5=Yes,6=No,7=No,8=Yes,9=Yes,10=No
@@ -62,7 +63,6 @@ Frame_3: 1=Yes,2=Yes,3=Yes,4=Yes,5=No,6=No,7=Yes,8=No,9=Yes,10=No
 Frame_4: 1=Unclear,2=No,3=No,4=No,5=No,6=No,7=No,8=No,9=Yes,10=No
 Frame_5: 1=No,2=No,3=Unclear,4=Unclear,5=No,6=No,7=No,8=No,9=No,10=No
 Frame_6: 1=No,2=No,3=No,4=No,5=No,6=No,7=No,8=No,9=No,10=Yes
-...continue one line per frame for all frames...
 
 SIGNALS:
 Absence or Avoidance of Eye Contact | Yes/No/Unclear | Your one-sentence observation here.
