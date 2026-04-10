@@ -116,3 +116,21 @@ def test_gaze_to_description_down():
     from src.annotator import _gaze_to_description
     desc = _gaze_to_description(pitch_deg=-25.0, yaw_deg=0.0)
     assert "down" in desc.lower()
+
+
+# ---------------------------------------------------------------------------
+# _thumb_timestamp
+# ---------------------------------------------------------------------------
+
+def test_thumb_timestamp_first_frame():
+    from src.annotator import _thumb_timestamp
+    from pathlib import Path
+    # thumb_00001.jpg at 2.0 fps → (1-1)/2.0 = 0.0s
+    assert _thumb_timestamp(Path("thumb_00001.jpg"), fps=2.0) == 0.0
+
+
+def test_thumb_timestamp_frame_12():
+    from src.annotator import _thumb_timestamp
+    from pathlib import Path
+    # thumb_00012.jpg at 2.0 fps → (12-1)/2.0 = 5.5s
+    assert _thumb_timestamp(Path("thumb_00012.jpg"), fps=2.0) == 5.5
