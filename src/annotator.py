@@ -378,3 +378,47 @@ def _annotate_objects(frame_bgr: np.ndarray) -> str:
 
     except Exception as e:
         return f"Object detection unavailable (error: {type(e).__name__})."
+
+
+# ---------------------------------------------------------------------------
+# Language annotation — Signals 4, 5 (Whisper word timestamps + NLP)
+# ---------------------------------------------------------------------------
+
+def _load_words_json(words_json_path: Path) -> list[dict]:
+    """Load and flatten all words from a Whisper word-timestamp JSON file."""
+    try:
+        data = json.loads(words_json_path.read_text(encoding="utf-8"))
+        all_words: list[dict] = []
+        for segment in data.get("segments", []):
+            all_words.extend(segment.get("words", []))
+        return all_words
+    except Exception:
+        return []
+
+
+def _annotate_language(
+    thumb_path: Path,
+    all_words: list[dict],
+    fps: float,
+) -> str:
+    """Return a natural language string describing speech near this frame.
+
+    Uses a ±3 second window around the frame's video timestamp.
+    """
+    t_center = _thumb_timestamp(thumb_path, fps)
+    window_words = _window_words(all_words, t_center, window=3.0)
+
+    if not window_words:
+        return f"t={t_center:.0f}s window: no speech detected near this frame."
+
+    snippet = " ".join(w["word"] for w in window_words).strip()
+    observations = [f"t={t_center:.0f}s window: speech — \"{snippet[:80]}\""]
+
+    echolalia = _detect_echolalia(window_words)
+    if echolalia:
+        observations.append(echolalia)
+
+    if _detect_pronoun_reversal(window_words):
+        observations.append("pronoun reversal candidate ('you' used in first-person context).")
+
+    return " ".join(observations)
