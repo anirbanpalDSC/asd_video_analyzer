@@ -195,6 +195,52 @@ def transcribe_mp3(mp3_path: Path, output_dir: Path, dry_run: bool = False) -> O
     return None
 
 
+def transcribe_mp3_with_timestamps(mp3_path: Path, output_dir: Path) -> Optional[Path]:
+    """Transcribe mp3 using Whisper with word-level timestamps.
+
+    Saves a JSON file alongside the .txt transcript containing all segments
+    and per-word start/end times. Returns the Path to the JSON file, or None
+    on failure.
+
+    The JSON structure matches Whisper's native output:
+        {"segments": [{"start": float, "end": float, "text": str,
+                        "words": [{"word": str, "start": float, "end": float}, ...]}, ...]}
+    """
+    import json as _json
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    json_path = output_dir / (mp3_path.stem + ".words.json")
+
+    try:
+        import whisper as _whisper
+        device = "cuda" if _cuda_available() else "cpu"
+        model = _whisper.load_model(
+            "base", device=device,
+            download_root=u_utils.WHISPER_CACHE_DIR,
+        )
+        result = model.transcribe(str(mp3_path), word_timestamps=True)
+        # Keep only the fields we need to keep the file small
+        segments_out = []
+        for seg in result.get("segments", []):
+            segments_out.append({
+                "start": seg["start"],
+                "end":   seg["end"],
+                "text":  seg["text"],
+                "words": [
+                    {"word": w["word"], "start": w["start"], "end": w["end"]}
+                    for w in seg.get("words", [])
+                ],
+            })
+        json_path.write_text(
+            _json.dumps({"segments": segments_out}, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        return json_path
+    except Exception as e:
+        print(f"[whisper word timestamps] {e}")
+        return None
+
+
 def process_video(video_path: Path, force: bool = False) -> None:
     """Perform the full pipeline for a single upload.
 
