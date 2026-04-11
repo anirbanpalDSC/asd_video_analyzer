@@ -246,25 +246,61 @@ def process_video(video_path: Path, force: bool = False) -> None:
 
     * create processed/<basename>/ and thumbs/ subdirectory
     * convert video -> mp3
-    * extract thumbnails
-    * run whisper to transcribe audio (if whisper is available)
+    * extract thumbnails at 2 fps
+    * run whisper to transcribe audio with word timestamps
+    * run specialized model annotation on thumbnails
 
-    If ``force`` is False the directory is skipped when it already exists.
+    If ``force`` is False the full pipeline is skipped when already processed,
+    but annotation is still run if annotations.json is missing.
     """
+    import json as _json
+    from config.config import ANNOTATION_FPS
+    from src.annotator import annotate_frames
+
     ensure_dirs()
     target = get_processed_folder(video_path.name)
-    thumbs = target / 'thumbs'
-    transcript_path = target / (video_path.stem + '.txt')
-    if target.exists() and transcript_path.is_file() and not force:
+    thumbs = target / "thumbs"
+    transcript_path = target / (video_path.stem + ".txt")
+    words_json_path = target / (video_path.stem + ".words.json")
+    annotations_path = thumbs / "annotations.json"
+
+    already_processed = target.exists() and transcript_path.is_file()
+
+    if already_processed and not force:
+        # Full pipeline already done — only annotate if missing (new feature)
+        if not annotations_path.exists():
+            thumb_list = sorted(thumbs.glob("thumb_*.jpg"))
+            result = annotate_frames(
+                thumb_list,
+                words_json_path if words_json_path.exists() else None,
+                fps=2.0,
+            )
+            annotations_path.write_text(
+                _json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
         return
+
     target.mkdir(parents=True, exist_ok=True)
     thumbs.mkdir(parents=True, exist_ok=True)
 
-    mp3_out = target / (video_path.stem + '.mp3')
+    mp3_out = target / (video_path.stem + ".mp3")
     convert_to_mp3(video_path, mp3_out)
     generate_thumbnails(video_path, thumbs)
-    # transcription is best‑effort
-    transcribe_mp3(mp3_out, target)
+
+    # Transcription — best-effort; word timestamps preferred
+    if not transcribe_mp3_with_timestamps(mp3_out, target):
+        transcribe_mp3(mp3_out, target)   # fall back to plain .txt only
+
+    # Annotation — run after thumbnails and transcript are ready
+    thumb_list = sorted(thumbs.glob("thumb_*.jpg"))
+    result = annotate_frames(
+        thumb_list,
+        words_json_path if words_json_path.exists() else None,
+        fps=2.0,
+    )
+    annotations_path.write_text(
+        _json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
 
 def delete_video(video_filename: str) -> bool:
