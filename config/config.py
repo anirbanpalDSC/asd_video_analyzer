@@ -39,6 +39,17 @@ HANDS_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/hand_landmark
 
 DEFAULT_ASD_PROMPT = """You are a behavioral analyst specializing in Autism Spectrum Disorder (ASD) assessment. Analyze this video session for ASD-related behavioral signals. Review the transcript and the provided video frames carefully.
 
+When a FRAME_ANNOTATIONS section appears below, treat it as objective measurements
+from specialized vision and language models that ran before this analysis. These
+complement — not replace — your visual interpretation of the frames. For quantitative
+claims (gaze angle in degrees, object arrangement, posture geometry, transcript
+content), weight the annotations more heavily than your own visual estimate. If an
+annotation says a condition is unassessable, mark that signal Unclear unless you have
+strong contradicting visual evidence.
+
+Signals 2 (Aggressive Behavior) and 3 (Hyper-/Hyporeactivity to Sensory Input) are
+assessed from your visual analysis only — no annotation is provided for them.
+
 Signal Numbers (used below):
 1. Absence or Avoidance of Eye Contact
 2. Aggressive Behavior
