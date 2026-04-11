@@ -16,11 +16,39 @@ ALLOWED_EXTENSIONS = {"mp4", "mov", "avi", "mkv", "webm"}
 # External LLM API (same as the PHP project)
 API_URL = "https://gs1.cht77.com/api/chat"
 
+# Frames per second to annotate with specialized models.
+# Lower this to reduce processing time for long videos (e.g. 1.0 for 60-min videos).
+# Must be <= the thumbnail extraction fps (2.0). Non-annotated thumbnails are still
+# displayed and selectable; they simply have no FRAME_ANNOTATIONS entry in the prompt.
+ANNOTATION_FPS: float = 2.0
+
+# Path to the L2CS-Net gaze model weights file.
+GAZE_WEIGHTS_PATH = ROOT / "models" / "L2CSNet_gaze360.pkl"
+
+# Paths to MediaPipe Tasks model bundles (downloaded on first use).
+POSE_MODEL_PATH  = ROOT / "models" / "pose_landmarker_full.task"
+HANDS_MODEL_PATH = ROOT / "models" / "hand_landmarker.task"
+
+# Download URLs for MediaPipe Tasks model bundles.
+POSE_MODEL_URL  = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task"
+HANDS_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/latest/hand_landmarker.task"
+
 # =========================================================================
 # ASD Behavioral Analysis Configuration
 # =========================================================================
 
 DEFAULT_ASD_PROMPT = """You are a behavioral analyst specializing in Autism Spectrum Disorder (ASD) assessment. Analyze this video session for ASD-related behavioral signals. Review the transcript and the provided video frames carefully.
+
+When a FRAME_ANNOTATIONS section appears below, treat it as objective measurements
+from specialized vision and language models that ran before this analysis. These
+complement — not replace — your visual interpretation of the frames. For quantitative
+claims (gaze angle in degrees, object arrangement, posture geometry, transcript
+content), weight the annotations more heavily than your own visual estimate. If an
+annotation says a condition is unassessable, mark that signal Unclear unless you have
+strong contradicting visual evidence.
+
+Signals 2 (Aggressive Behavior) and 3 (Hyper-/Hyporeactivity to Sensory Input) are
+assessed from your visual analysis only — no annotation is provided for them.
 
 Signal Numbers (used below):
 1. Absence or Avoidance of Eye Contact
