@@ -32,6 +32,53 @@ def _encode_images(paths: List[Path]) -> List[str]:
     return b64_list
 
 
+def _build_frame_annotations_block(
+    selected_thumb_paths: list,
+    annotations: dict,
+) -> str:
+    """Build the FRAME_ANNOTATIONS: prompt block from cached annotation data.
+
+    Returns an empty string if no annotations are available.
+    """
+    if not annotations or not selected_thumb_paths:
+        return ""
+
+    lines = [
+        "",
+        "FRAME_ANNOTATIONS:",
+        "(Pre-computed measurements from specialized vision and language models.",
+        "These complement your own visual analysis. For quantitative claims —",
+        "gaze angle, object count, transcript content, posture geometry — weight",
+        "these annotations more heavily than visual estimation alone.",
+        "If an annotation states a condition is unassessable, factor that into",
+        "your confidence and mark Unclear if no other evidence supports Yes.)",
+        "",
+    ]
+
+    for i, thumb in enumerate(selected_thumb_paths, 1):
+        ann = annotations.get(thumb.name, {})
+        if not ann:
+            continue
+        lines.append(f"Frame_{i}:")
+        for key in ("gaze", "pose", "objects", "language"):
+            if key in ann:
+                lines.append(f"  {key}: {ann[key]}")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def _load_annotations(selected_thumb_paths: list) -> dict:
+    """Load annotations.json for the video containing the selected thumbnails."""
+    if not selected_thumb_paths:
+        return {}
+    annotations_path = selected_thumb_paths[0].parent / "annotations.json"
+    if not annotations_path.exists():
+        return {}
+    try:
+        return json.loads(annotations_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
 
 
 
@@ -60,6 +107,12 @@ def analyze(
     # combine with transcript if available
     if transcript:
         prompt = f"{prompt}\n\nTranscript context:\n{transcript}"
+
+    # Inject FRAME_ANNOTATIONS from cached specialized model output
+    annotations = _load_annotations(selected_thumb_paths or [])
+    fa_block = _build_frame_annotations_block(selected_thumb_paths or [], annotations)
+    if fa_block:
+        prompt = prompt + fa_block
 
     # Build image list
     img_b64_list = _encode_images(selected_thumb_paths or [])
@@ -122,6 +175,12 @@ def analyze_stream(
     prompt = user_prompt or DEFAULT_ASD_PROMPT
     if transcript:
         prompt = f"{prompt}\n\nTranscript context:\n{transcript}"
+
+    # Inject FRAME_ANNOTATIONS from cached specialized model output
+    annotations = _load_annotations(selected_thumb_paths or [])
+    fa_block = _build_frame_annotations_block(selected_thumb_paths or [], annotations)
+    if fa_block:
+        prompt = prompt + fa_block
 
     img_b64_list = _encode_images(selected_thumb_paths or [])
 

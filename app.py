@@ -261,6 +261,14 @@ def main():
         st.write("")
         with st.expander("What's new", expanded=False):
             st.markdown("""
+**v0.8** — Specialized model annotation pipeline
+- L2CS-Net gaze estimation injected as frame-level annotations (Signal 1)
+- MediaPipe Pose + Hands posture geometry annotations (Signals 7, 8, 9)
+- YOLOv8m object arrangement detection (Signal 6)
+- Whisper word-timestamp language alignment per frame (Signals 4, 5)
+- VLM prompt now includes FRAME_ANNOTATIONS with quantitative measurements
+- Annotation cached in annotations.json — one-time cost per video
+
 **v0.7** — UI refinements
 - Video player resized to compact fixed width
 - Sidebar expander content has solid white/dark background
