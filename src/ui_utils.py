@@ -75,8 +75,12 @@ def _parse_frame_detections(section_text: str) -> Dict[int, List]:
     return detections
 
 
-def _compute_confidence(detection_list: List) -> Tuple[str, int, int]:
+def _compute_confidence(detection_list: List, observed: str = "Yes") -> Tuple[str, int, int]:
     """Return (confidence_label, detected_count, assessable_frames).
+
+    Confidence reflects certainty in the *observed outcome*, not raw detection rate:
+    - Observed=Yes  → scales with detection rate   (more detections → Higher confidence)
+    - Observed=No   → scales with absence rate      (fewer detections → Higher confidence)
 
     None values (Unclear) are excluded from both numerator and denominator.
     """
@@ -85,7 +89,13 @@ def _compute_confidence(detection_list: List) -> Tuple[str, int, int]:
     if total == 0:
         return "N/A", 0, 0
     count = sum(1 for v in assessable if v)
-    pct = count / total
+    detection_pct = count / total
+
+    if observed.lower() == "yes":
+        pct = detection_pct          # high detections → confident Yes
+    else:
+        pct = 1.0 - detection_pct   # high absences → confident No
+
     if pct >= _HIGH_THRESHOLD:
         label = "High"
     elif pct >= _MEDIUM_THRESHOLD:
@@ -130,10 +140,24 @@ def _confidence_badge(val: str, dark: bool = False) -> str:
     return _badge(val, kind, dark)
 
 
+def _normalize_observed(val: str) -> str:
+    """Collapse multi-value LLM outputs like 'Yes/No/Unclear' to a single word.
+
+    Priority: Yes > Unclear > No.  Matches against all slash- or comma-separated
+    tokens so 'No/No/No' → 'No' and 'Yes/No/Unclear' → 'Yes'.
+    """
+    tokens = [t.strip().lower() for t in val.replace(",", "/").split("/")]
+    if any(t in ("yes", "true", "1") for t in tokens):
+        return "Yes"
+    if any(t in ("unclear", "unknown", "n/a") for t in tokens):
+        return "Unclear"
+    return "No"
+
+
 def _observed_badge(val: str, dark: bool = False) -> str:
-    v = val.strip().lower()
-    kind = "yes" if v == "yes" else ("no" if v == "no" else "neutral")
-    return _badge(val, kind, dark)
+    normalized = _normalize_observed(val)
+    kind = "yes" if normalized == "Yes" else ("no" if normalized == "No" else "neutral")
+    return _badge(normalized, kind, dark)
 
 
 # ---------------------------------------------------------------------------
@@ -215,28 +239,39 @@ def parse_and_display_analysis(analysis_text: str) -> None:
         except StopIteration:
             sig_idx = None
 
+        observed_val = _normalize_observed(row["Observed"])
+
         if use_frequency and sig_idx is not None:
             det_list = frame_detections.get(sig_idx, [])
-            conf_label, detected, total = _compute_confidence(det_list)
-            frames_col = f"{detected} / {total} frames assessed ({int(detected/total*100) if total else 0}%)"
+            conf_label, detected, total = _compute_confidence(det_list, observed_val)
+            if total > 0:
+                absent = total - detected
+                if observed_val == "Yes":
+                    frames_col = f"{detected}/{total} frames showed signal ({int(detected/total*100)}%)"
+                else:
+                    frames_col = f"{absent}/{total} frames showed no signal ({int(absent/total*100)}%)"
+            else:
+                frames_col = "N/A"
         else:
             conf_label = row["_llm_confidence"] or "N/A"
             frames_col = "N/A"
 
         display_rows.append({
             "Signal": row["Signal"],
-            "Observed": row["Observed"],
+            "Observed": observed_val,
             "Confidence": conf_label,
-            "Frames Detected": frames_col,
+            "Frame Evidence": frames_col,
             "Note": row["Note"],
         })
 
     # ── Explainability note ──────────────────────────────────────────────────
     if use_frequency:
         st.info(
-            f"**Confidence methodology:** Each signal was evaluated independently "
-            f"across all {n_frames_parsed} frame(s). "
-            f"Confidence reflects the proportion of frames in which the signal was detected — "
+            f"**Confidence** reflects certainty in the *observed outcome* across "
+            f"all {n_frames_parsed} frame(s) — not a raw detection rate. "
+            f"For a **Yes** signal, High means the behaviour was seen in most frames. "
+            f"For a **No** signal, High means the behaviour was consistently *absent* "
+            f"(e.g. 0/10 frames with signal = High confidence of No). "
             f"**High** \u2265 70% | **Medium** 30\u201369% | **Low** < 30%."
         )
     else:
@@ -248,7 +283,7 @@ def parse_and_display_analysis(analysis_text: str) -> None:
     # ── HTML table (theme-safe — avoids AG Grid dark-mode issues) ────────────
     dark = st.session_state.get("theme", "light") == "dark"
 
-    col_names = ["Signal", "Observed", "Confidence", "Frames Detected", "Note"]
+    col_names = ["Signal", "Observed", "Confidence", "Frame Evidence", "Note"]
 
     if dark:
         th_style = (
@@ -282,7 +317,7 @@ def parse_and_display_analysis(analysis_text: str) -> None:
             f'<td style="{td_style}">{row["Signal"]}</td>',
             f'<td style="{td_style}">{_observed_badge(row["Observed"], dark)}</td>',
             f'<td style="{td_style}">{_confidence_badge(row["Confidence"], dark)}</td>',
-            f'<td style="{td_style}">{row["Frames Detected"]}</td>',
+            f'<td style="{td_style}">{row["Frame Evidence"]}</td>',
             f'<td style="{td_style}">{row["Note"]}</td>',
         ]
         body_rows.append(f'<tr style="{bg}">{"".join(cells)}</tr>')

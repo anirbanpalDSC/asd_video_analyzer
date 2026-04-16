@@ -195,6 +195,95 @@ def transcribe_mp3(mp3_path: Path, output_dir: Path, dry_run: bool = False) -> O
     return None
 
 
+def _extract_youtube_id(url: str) -> Optional[str]:
+    """Return the YouTube video ID from any common YouTube URL format, or None."""
+    import re
+    patterns = [
+        r"(?:v=|/v/|youtu\.be/|/embed/|/shorts/)([A-Za-z0-9_-]{11})",
+    ]
+    for pat in patterns:
+        m = re.search(pat, url)
+        if m:
+            return m.group(1)
+    return None
+
+
+def transcribe_from_youtube(url: str, output_dir: Path, stem: str) -> Optional[Path]:
+    """Fetch the transcript for a YouTube video using the YouTube Transcript API.
+
+    Writes both a plain .txt and a .words.json (in the same schema as Whisper's
+    word-timestamp output) so the rest of the pipeline treats it identically.
+
+    Returns the path to the .words.json on success, or None on any failure.
+    """
+    import json as _json
+
+    video_id = _extract_youtube_id(url)
+    if not video_id:
+        print(f"[youtube-transcript] Could not extract video ID from {url!r}")
+        return None
+
+    try:
+        from youtube_transcript_api import YouTubeTranscriptApi
+    except ImportError:
+        print("[youtube-transcript] youtube-transcript-api not installed")
+        return None
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    txt_path  = output_dir / (stem + ".txt")
+    json_path = output_dir / (stem + ".words.json")
+
+    try:
+        api = YouTubeTranscriptApi()
+
+        # Prefer manually-created captions; fall back to auto-generated
+        transcript_list = api.list(video_id)
+        try:
+            transcript = transcript_list.find_manually_created_transcript(
+                ["en", "en-US", "en-GB"]
+            )
+            source = "manual"
+        except Exception:
+            transcript = transcript_list.find_generated_transcript(
+                ["en", "en-US", "en-GB"]
+            )
+            source = "auto-generated"
+
+        entries = transcript.fetch()
+
+        # Build words.json in Whisper-compatible schema
+        segments_out = []
+        plain_parts  = []
+        for entry in entries:
+            text  = getattr(entry, "text", "").strip()
+            start = float(getattr(entry, "start", 0.0))
+            dur   = float(getattr(entry, "duration", 0.0))
+            end   = start + dur
+            plain_parts.append(text)
+            # YouTube captions don't have per-word timestamps; emit each
+            # caption chunk as a single-word entry so downstream code works.
+            segments_out.append({
+                "start": start,
+                "end":   end,
+                "text":  text,
+                "words": [{"word": text, "start": start, "end": end}],
+            })
+
+        plain_text = " ".join(plain_parts)
+        txt_path.write_text(plain_text, encoding="utf-8")
+        json_path.write_text(
+            _json.dumps({"segments": segments_out, "_source": f"youtube-{source}"},
+                        ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        print(f"[youtube-transcript] fetched {source} captions for {video_id}")
+        return json_path
+
+    except Exception as e:
+        print(f"[youtube-transcript] {type(e).__name__}: {e}")
+        return None
+
+
 def transcribe_mp3_with_timestamps(mp3_path: Path, output_dir: Path) -> Optional[Path]:
     """Transcribe mp3 using Whisper with word-level timestamps.
 
@@ -235,23 +324,33 @@ def transcribe_mp3_with_timestamps(mp3_path: Path, output_dir: Path) -> Optional
             _json.dumps({"segments": segments_out}, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+        # Also write the plain .txt so get_video_info() can find the transcript
+        plain_text = result.get("text", "").strip()
+        txt_path = output_dir / (mp3_path.stem + ".txt")
+        txt_path.write_text(plain_text, encoding="utf-8")
         return json_path
     except Exception as e:
         print(f"[whisper word timestamps] {e}")
         return None
 
 
-def process_video(video_path: Path, force: bool = False) -> None:
+def process_video(video_path: Path, force: bool = False,
+                  source_url: Optional[str] = None) -> None:
     """Perform the full pipeline for a single upload.
 
     * create processed/<basename>/ and thumbs/ subdirectory
     * convert video -> mp3
     * extract thumbnails at 2 fps
-    * run whisper to transcribe audio with word timestamps
+    * transcribe audio:
+        - URL inputs: YouTube Transcript API first (instant, higher quality),
+          fall back to Whisper if unavailable or failed
+        - File uploads: Whisper only
     * run specialized model annotation on thumbnails
 
     If ``force`` is False the full pipeline is skipped when already processed,
     but annotation is still run if annotations.json is missing.
+    ``source_url`` is the original URL the video was downloaded from (YouTube /
+    Facebook). When provided, the YouTube Transcript API is tried first.
     """
     import json as _json
     from config.config import ANNOTATION_FPS
@@ -287,9 +386,22 @@ def process_video(video_path: Path, force: bool = False) -> None:
     convert_to_mp3(video_path, mp3_out)
     generate_thumbnails(video_path, thumbs)
 
-    # Transcription — best-effort; word timestamps preferred
-    if not transcribe_mp3_with_timestamps(mp3_out, target):
-        transcribe_mp3(mp3_out, target)   # fall back to plain .txt only
+    # Transcription — priority order depends on source
+    # YouTube URL → try YouTube Transcript API first (no audio processing needed,
+    # higher quality captions), fall back to Whisper on failure.
+    # File upload → Whisper only.
+    transcript_done = False
+    if source_url and _extract_youtube_id(source_url):
+        transcript_done = bool(
+            transcribe_from_youtube(source_url, target, video_path.stem)
+        )
+        if not transcript_done:
+            print("[process_video] YouTube transcript unavailable, falling back to Whisper")
+
+    if not transcript_done:
+        # Whisper with word timestamps; plain .txt fallback if that also fails
+        if not transcribe_mp3_with_timestamps(mp3_out, target):
+            transcribe_mp3(mp3_out, target)
 
     # Annotation — run after thumbnails and transcript are ready
     thumb_list = sorted(thumbs.glob("thumb_*.jpg"))
@@ -341,10 +453,23 @@ def get_video_info(video_filename: str) -> dict:
         if mp3.is_file():
             info['mp3'] = mp3
         info['thumbs'] = sorted(proc.glob('thumbs/thumb_*.jpg'))
-        txt = proc / (Path(video_filename).stem + '.txt')
+        stem = Path(video_filename).stem
+        txt = proc / (stem + '.txt')
         if txt.is_file():
             try:
                 info['transcript'] = txt.read_text(encoding='utf-8')
             except Exception:
                 info['transcript'] = None
+        else:
+            # Fall back to words.json if plain .txt was never written
+            words_json = proc / (stem + '.words.json')
+            if words_json.is_file():
+                try:
+                    import json as _json
+                    data = _json.loads(words_json.read_text(encoding='utf-8'))
+                    info['transcript'] = " ".join(
+                        seg.get("text", "") for seg in data.get("segments", [])
+                    ).strip()
+                except Exception:
+                    info['transcript'] = None
     return info

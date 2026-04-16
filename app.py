@@ -151,7 +151,8 @@ def main():
                     else:
                         st.success(f"✓ Downloaded: {saved_name[:30]}...")
                         with st.spinner("Processing video..."):
-                            processor.process_video(UPLOADS_DIR / saved_name)
+                            processor.process_video(UPLOADS_DIR / saved_name,
+                                                    source_url=video_url)
                         
                         # Clear previous analysis and frame selection
                         st.session_state.selected_frames_indices = set()
@@ -186,21 +187,32 @@ def main():
                         st.rerun()
         
         st.divider()
-        
+
         # Video selection from history
         videos = processor.list_uploads()
+
+        # Guard: if the currently selected video no longer exists on disk, deselect it.
+        _sv = st.session_state.get('selected_video')
+        if _sv and _sv not in videos:
+            st.session_state.selected_video = None
+            st.session_state['confirm_delete'] = False
+
         if videos:
             st.subheader("Recent Videos")
+            # Use a version counter as part of the key so that after a delete the
+            # selectbox renders as a brand-new widget with no Streamlit-cached state.
+            _sel_ver = st.session_state.get('_selectbox_ver', 0)
             selected = st.selectbox(
-                "Choose a video", 
+                "Choose a video",
                 videos,
-                key="sidebar_video_select",
+                key=f"sidebar_video_select_{_sel_ver}",
                 index=None,
                 placeholder="Select a video..."
             )
             if selected and selected != st.session_state.get("selected_video"):
                 st.session_state.selected_video = selected
                 st.session_state.pop("analysis_result", None)
+                st.session_state['confirm_delete'] = False
 
             # Delete button for currently selected video
             current = st.session_state.get('selected_video')
@@ -220,6 +232,9 @@ def main():
                             st.session_state.selected_frames_indices = set()
                             st.session_state.processed_upload_name = None
                             st.session_state['confirm_delete'] = False
+                            # Bump version so the selectbox renders as a fresh widget
+                            # with no Streamlit-internal cached state for the old video.
+                            st.session_state['_selectbox_ver'] = _sel_ver + 1
                             st.rerun()
                     with col_no:
                         if st.button("Cancel", use_container_width=True):
@@ -261,6 +276,16 @@ def main():
         st.write("")
         with st.expander("What's new", expanded=False):
             st.markdown("""
+**v0.10** — Annotations download
+- Download button for annotations.json (per-frame specialized model output) now appears below the frame selector
+
+**v0.9** — YouTube Transcript API + confidence fix
+- YouTube URL inputs now fetch captions directly from YouTube first (instant, higher quality)
+- Falls back to Whisper automatically if captions are unavailable or the video is a file upload
+- Confidence now reflects certainty in the *observed outcome*: No + 0/10 frames = High confidence
+- Fixed "Yes/No/Unclear" appearing verbatim in the Observed column
+- Fixed delete video restoring the same video after deletion
+
 **v0.8** — Specialized model annotation pipeline
 - L2CS-Net gaze estimation injected as frame-level annotations (Signal 1)
 - MediaPipe Pose + Hands posture geometry annotations (Signals 7, 8, 9)
@@ -436,7 +461,19 @@ def main():
                 st.image(str(thumb_path), width="stretch")
 
     st.divider()
-    
+
+    # ── Annotation JSON download ──────────────────────────────────────────────
+    _ann_path = processor.get_processed_folder(selected_video) / "thumbs" / "annotations.json"
+    if _ann_path.is_file():
+        st.download_button(
+            label="⬇️ Download annotations.json",
+            data=_ann_path.read_bytes(),
+            file_name=f"{Path(selected_video).stem}_annotations.json",
+            mime="application/json",
+        )
+
+    st.divider()
+
     # Analysis section
     st.subheader("🔍 Behavioral Analysis")
     
