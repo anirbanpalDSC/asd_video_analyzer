@@ -151,7 +151,8 @@ def main():
                     else:
                         st.success(f"✓ Downloaded: {saved_name[:30]}...")
                         with st.spinner("Processing video..."):
-                            processor.process_video(UPLOADS_DIR / saved_name)
+                            processor.process_video(UPLOADS_DIR / saved_name,
+                                                    source_url=video_url)
                         
                         # Clear previous analysis and frame selection
                         st.session_state.selected_frames_indices = set()
@@ -275,6 +276,16 @@ def main():
         st.write("")
         with st.expander("What's new", expanded=False):
             st.markdown("""
+**v0.10** — Annotations download
+- Download button for annotations.json (per-frame specialized model output) now appears below the frame selector
+
+**v0.9** — YouTube Transcript API + confidence fix
+- YouTube URL inputs now fetch captions directly from YouTube first (instant, higher quality)
+- Falls back to Whisper automatically if captions are unavailable or the video is a file upload
+- Confidence now reflects certainty in the *observed outcome*: No + 0/10 frames = High confidence
+- Fixed "Yes/No/Unclear" appearing verbatim in the Observed column
+- Fixed delete video restoring the same video after deletion
+
 **v0.8** — Specialized model annotation pipeline
 - L2CS-Net gaze estimation injected as frame-level annotations (Signal 1)
 - MediaPipe Pose + Hands posture geometry annotations (Signals 7, 8, 9)
@@ -450,7 +461,19 @@ def main():
                 st.image(str(thumb_path), width="stretch")
 
     st.divider()
-    
+
+    # ── Annotation JSON download ──────────────────────────────────────────────
+    _ann_path = processor.get_processed_folder(selected_video) / "thumbs" / "annotations.json"
+    if _ann_path.is_file():
+        st.download_button(
+            label="⬇️ Download annotations.json",
+            data=_ann_path.read_bytes(),
+            file_name=f"{Path(selected_video).stem}_annotations.json",
+            mime="application/json",
+        )
+
+    st.divider()
+
     # Analysis section
     st.subheader("🔍 Behavioral Analysis")
     
