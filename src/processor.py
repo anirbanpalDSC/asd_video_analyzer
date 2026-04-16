@@ -235,6 +235,10 @@ def transcribe_mp3_with_timestamps(mp3_path: Path, output_dir: Path) -> Optional
             _json.dumps({"segments": segments_out}, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+        # Also write the plain .txt so get_video_info() can find the transcript
+        plain_text = result.get("text", "").strip()
+        txt_path = output_dir / (mp3_path.stem + ".txt")
+        txt_path.write_text(plain_text, encoding="utf-8")
         return json_path
     except Exception as e:
         print(f"[whisper word timestamps] {e}")
@@ -341,10 +345,23 @@ def get_video_info(video_filename: str) -> dict:
         if mp3.is_file():
             info['mp3'] = mp3
         info['thumbs'] = sorted(proc.glob('thumbs/thumb_*.jpg'))
-        txt = proc / (Path(video_filename).stem + '.txt')
+        stem = Path(video_filename).stem
+        txt = proc / (stem + '.txt')
         if txt.is_file():
             try:
                 info['transcript'] = txt.read_text(encoding='utf-8')
             except Exception:
                 info['transcript'] = None
+        else:
+            # Fall back to words.json if plain .txt was never written
+            words_json = proc / (stem + '.words.json')
+            if words_json.is_file():
+                try:
+                    import json as _json
+                    data = _json.loads(words_json.read_text(encoding='utf-8'))
+                    info['transcript'] = " ".join(
+                        seg.get("text", "") for seg in data.get("segments", [])
+                    ).strip()
+                except Exception:
+                    info['transcript'] = None
     return info

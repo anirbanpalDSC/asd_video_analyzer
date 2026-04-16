@@ -18,3 +18,5 @@ l2cs @ git+https://github.com/Ahmednull/L2CS-Net.git@a4d8f7fa5436a2b2b9f08847162
 mediapipe>=0.10.0
 ultralytics>=8.0.0
 gdown>=4.7.0
+opencv-python>=4.8.0
+numpy>=1.24.0

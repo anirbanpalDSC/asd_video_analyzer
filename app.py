@@ -186,21 +186,32 @@ def main():
                         st.rerun()
         
         st.divider()
-        
+
         # Video selection from history
         videos = processor.list_uploads()
+
+        # Guard: if the currently selected video no longer exists on disk, deselect it.
+        _sv = st.session_state.get('selected_video')
+        if _sv and _sv not in videos:
+            st.session_state.selected_video = None
+            st.session_state['confirm_delete'] = False
+
         if videos:
             st.subheader("Recent Videos")
+            # Use a version counter as part of the key so that after a delete the
+            # selectbox renders as a brand-new widget with no Streamlit-cached state.
+            _sel_ver = st.session_state.get('_selectbox_ver', 0)
             selected = st.selectbox(
-                "Choose a video", 
+                "Choose a video",
                 videos,
-                key="sidebar_video_select",
+                key=f"sidebar_video_select_{_sel_ver}",
                 index=None,
                 placeholder="Select a video..."
             )
             if selected and selected != st.session_state.get("selected_video"):
                 st.session_state.selected_video = selected
                 st.session_state.pop("analysis_result", None)
+                st.session_state['confirm_delete'] = False
 
             # Delete button for currently selected video
             current = st.session_state.get('selected_video')
@@ -220,6 +231,9 @@ def main():
                             st.session_state.selected_frames_indices = set()
                             st.session_state.processed_upload_name = None
                             st.session_state['confirm_delete'] = False
+                            # Bump version so the selectbox renders as a fresh widget
+                            # with no Streamlit-internal cached state for the old video.
+                            st.session_state['_selectbox_ver'] = _sel_ver + 1
                             st.rerun()
                     with col_no:
                         if st.button("Cancel", use_container_width=True):

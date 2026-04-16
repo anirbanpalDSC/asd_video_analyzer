@@ -93,16 +93,16 @@ Frame_5: 1=No,2=No,3=Unclear,4=Unclear,5=No,6=No,7=No,8=No,9=No,10=No
 Frame_6: 1=No,2=No,3=No,4=No,5=No,6=No,7=No,8=No,9=No,10=Yes
 
 SIGNALS:
-Absence or Avoidance of Eye Contact | Yes/No/Unclear | Your one-sentence observation here.
-Aggressive Behavior | Yes/No/Unclear | Your one-sentence observation here.
-Hyper- or Hyporeactivity to Sensory Input | Yes/No/Unclear | Your one-sentence observation here.
-Non-Responsiveness to Verbal Interaction | Yes/No/Unclear | Your one-sentence observation here.
-Non-Typical Language | Yes/No/Unclear | Your one-sentence observation here.
-Object Lining-Up | Yes/No/Unclear | Your one-sentence observation here.
-Self-Hitting or Self-Injurious Behavior | Yes/No/Unclear | Your one-sentence observation here.
-Self-Spinning or Spinning Objects | Yes/No/Unclear | Your one-sentence observation here.
-Upper Limb Stereotypies | Yes/No/Unclear | Your one-sentence observation here.
-Background | Yes/No/Unclear | Your one-sentence observation here.
+Absence or Avoidance of Eye Contact | Yes | Gaze was consistently averted from the camera and caregiver in all assessable frames.
+Aggressive Behavior | Unclear | No other person was visible in any frame; signal could not be assessed.
+Hyper- or Hyporeactivity to Sensory Input | No | No identifiable sensory stimulus or atypical response was observed.
+Non-Responsiveness to Verbal Interaction | Yes | Subject did not orient or respond when the caregiver directed speech at them.
+Non-Typical Language | Unclear | Subject produced no speech in this segment; signal cannot be assessed.
+Object Lining-Up | No | No objects were visible in an arranged or sequenced pattern.
+Self-Hitting or Self-Injurious Behavior | No | No self-directed physical contact was observed in any frame.
+Self-Spinning or Spinning Objects | Yes | Subject maintained a spinning body posture across multiple frames.
+Upper Limb Stereotypies | Yes | Repeated non-functional arm elevation consistent with flapping was visible.
+Background | No | At least one signal (1) was marked Yes; Background cannot be assigned.
 
 CLINICAL NARRATIVE:
 Write your 3-5 sentence summary here."""
